@@ -68,6 +68,7 @@ dependencies {
     implementation(libs.androidx.foundation.layout.android) // solo una vez
 
     implementation(libs.androidx.runtime.livedata)
+    implementation(libs.androidx.media3.common.ktx)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

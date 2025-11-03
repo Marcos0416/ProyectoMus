@@ -24,6 +24,7 @@ import com.example.appcarnavalextraordinaria.Login.LoginScreen
 import com.example.appcarnavalextraordinaria.Login.RegistroScreen
 
 
+
 import com.example.appcarnavalextraordinaria.Screen2.TutorialesScreen
 
 
@@ -43,18 +44,26 @@ fun AppNavigation(innerPadding: PaddingValues) {
     val userViewModel: UserViewModel = viewModel(factory = factory)
 
     NavHost(navController = navController, startDestination = "main") {
+
         composable("main") {
             MainScreen(navController, userViewModel, context)
         }
 
+
+
+
+
+
         composable("Tutoriales") { TutorialesScreen(navController) }
         composable("Reglas") { ReglasBasicasScreen(navController) }
         composable("Mazo") { MazoCartasScreen(navController) }
+
         composable("Estrategias") { EstrategiasScreen(navController) }
         composable("Funcionamiento") { FlujoPartidaMusScreen(navController) }
         composable("Puntuacion") { PuntuacionScreen(navController) }
         composable("Senales") { SenalesScreen(navController) }
         composable("Partida") { PartidaMusScreen(navController) }
+
         composable("Registro") {
             RegistroScreen(
                 navController = navController,
@@ -71,6 +80,9 @@ fun AppNavigation(innerPadding: PaddingValues) {
                 onLoginSuccess = { navController.popBackStack() }
             )
         }
+
+
+
     }
 }
 

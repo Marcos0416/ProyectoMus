@@ -1,5 +1,6 @@
 package com.example.appcarnavalextraordinaria.Navigation
 
+import android.util.Log
 import androidx.compose.foundation.Image // Importa la clase para mostrar imágenes
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
@@ -74,6 +75,8 @@ fun Bars(
 
 
 
+
+
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -111,5 +114,7 @@ fun Bars(
         content(Modifier.padding(innerPadding))
     }
 }
+
+
 
 

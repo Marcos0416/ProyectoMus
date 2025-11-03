@@ -1,6 +1,7 @@
 package com.example.appcarnavalextraordinaria.Screen1
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
@@ -66,6 +67,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -73,6 +75,8 @@ import com.example.appcarnavalextraordinaria.Login.UserViewModel
 import com.example.appcarnavalextraordinaria.Navigation.Bars
 import com.example.appcarnavalextraordinaria.R
 import com.example.appcarnavalextraordinaria.ui.theme.AplicacionOrdinariaInterfacesTheme
+
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -192,6 +196,8 @@ fun MainScreen(navController: NavController,
                         imageRes = R.drawable.examenmus,
                         onClick = { navController.navigate("test") }
                     )
+
+
                 }
             }
         }
@@ -214,8 +220,10 @@ fun CardMenuItem(
 
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
-                indication = LocalIndication.current
-            ) { /* acción vacía */ },
+                indication = LocalIndication.current,
+                onClick = onClick
+            )
+        ,
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Row(
@@ -253,3 +261,4 @@ fun GreetingPreview() {
 }
 
  */
+
