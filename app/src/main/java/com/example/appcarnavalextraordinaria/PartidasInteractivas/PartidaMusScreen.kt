@@ -1,12 +1,20 @@
 package com.example.appcarnavalextraordinaria.PartidasInteractivas
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,6 +25,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.appcarnavalextraordinaria.Navigation.Bars
 
+
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameViewModel = viewModel()) {
@@ -25,85 +36,155 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
     val mensajes by musGameViewModel.mensajes.collectAsState()
     val cartasRepartidas by musGameViewModel.cartasRepartidas.collectAsState()
     val rondaActiva by musGameViewModel.rondaActiva.collectAsState()
+    val rondaMusActiva by musGameViewModel.rondaMusActiva.collectAsState()
     val acciones by musGameViewModel.acciones.collectAsState()
     val apuestaActual by musGameViewModel.apuestaActual.collectAsState()
     val ganadorGrande by musGameViewModel.ganadorGrande.collectAsState()
     val jugadoresActivos by musGameViewModel.jugadoresActivos.collectAsState()
+    val cartasDescartadas by musGameViewModel.cartasDescartadas.collectAsState()
+    val ganadorChica by musGameViewModel.ganadorChica.collectAsState()
 
     Bars(navController = navController) { modifier ->
         Surface(
             modifier = modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            Column(
+            LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(16.dp),
-                verticalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    "Partida de Mus - Apuestas reales",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.primary)
-
-                if (!cartasRepartidas) {
-                    Button(onClick = { musGameViewModel.repartirCartas() }) {
-                        Text("Repartir Cartas")
+                item {
+                    Text(
+                        "Partida de Mus - Apuestas",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                item {
+                    if (!cartasRepartidas) {
+                        Button(onClick = { musGameViewModel.repartirCartas() }) {
+                            Text("Repartir Cartas")
+                        }
                     }
                 }
-
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    jugadores.forEachIndexed { idx, jugador ->
-                        CartaJugador(jugador, turno == idx)
-                    }
+                items(jugadores.size) { idx ->
+                    CartaJugador(jugadores[idx], turno == idx)
+                }
+                item {
                     ganadorGrande?.let { ganador ->
                         Text(
-                            text = "Ganador de Grande: ${ganador.nombre}",
+                            "Ganador de Grande: ${ganador.nombre}",
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.padding(vertical = 8.dp)
+                            color = MaterialTheme.colorScheme.secondary
                         )
                     }
                 }
-
-                Text(
-                    text = "Apuesta actual: ${apuestaActual?.cantidad ?: 0} piedras",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-
-                Text(text = mensajes, fontSize = 18.sp, modifier = Modifier.padding(vertical = 12.dp))
-
-                // Solo el humano en turno activo puede ver botones
-                if (rondaActiva && jugadores[turno].esHumano && jugadoresActivos[turno]) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                        Button(onClick = { musGameViewModel.realizarAccion(Accion.PASAR) }) { Text("Pasar") }
-                        Button(onClick = { musGameViewModel.realizarAccion(Accion.SUBIR, (apuestaActual?.cantidad ?: 2) + 1) }) { Text("Subir") }
-                        Button(onClick = { musGameViewModel.realizarAccion(Accion.IGUALAR) }) { Text("Igualar") }
-                        Button(onClick = { musGameViewModel.realizarAccion(Accion.RETIRARSE) }) { Text("Retirarse") }
-                    }
+                item {
+                    Text(
+                        "Apuesta actual: ${apuestaActual?.cantidad ?: 0} piedras",
+                        style = MaterialTheme.typography.titleMedium
+                    )
                 }
+                item {
+                    Text(text = mensajes, fontSize = 18.sp)
+                }
+                if (rondaMusActiva) {
+                    item {
+                        Text("Selecciona las cartas a descartar para: ${jugadores[turno].nombre}")
+                        Row(
+                            modifier = Modifier.horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            jugadores[turno].cartas.forEach { carta ->
+                                val descartada = cartasDescartadas[turno].contains(carta.id)
+                                Box(
+                                    modifier = Modifier
+                                        .size(50.dp, 70.dp)
+                                        .background(if (descartada) Color.Red else Color.LightGray)
+                                        .clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = LocalIndication.current,
+                                            onClick = { musGameViewModel.toggleDescartarCarta(turno, carta.id) }
+                                        )
+                                    ,
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(carta.valor.toString(), fontSize = 20.sp)
+                                }
+                            }
+                        }
+                        Button(
+                            onClick = { musGameViewModel.confirmarDescartesJugador(turno) },
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                        ) {
+                            Text("Confirmar descartes")
+                        }
+                    }
+                } else if (rondaActiva && jugadoresActivos[turno]) {
+                    item {
+                        Text("Turno de: ${jugadores[turno].nombre}", style = MaterialTheme.typography.titleMedium)
+                        var cantidadSubir by remember { mutableStateOf("1") } // almacena la cantidad de subida
 
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(acciones.size) { i ->
-                        Text(
-                            acciones[i],
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(4.dp),
-                            textAlign = TextAlign.Center
+
+                        TextField(
+                            value = cantidadSubir,
+                            onValueChange = { newValue ->
+                                if (newValue.all { it.isDigit() }) {
+                                    cantidadSubir = newValue
+                                }
+                            },
+                            label = { Text("Piedras a subir") },
+                            modifier = Modifier.width(150.dp)
                         )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(onClick = { musGameViewModel.realizarAccion(Accion.PASAR) }) { Text("Pasar") }
+                            Button(
+                                onClick = {
+                                    val cant = cantidadSubir.toIntOrNull() ?: 1
+                                    musGameViewModel.realizarAccion(Accion.SUBIR, cant)
+                                }
+                            ) { Text("Subir") }
+                            Button(onClick = { musGameViewModel.realizarAccion(Accion.IGUALAR) }) { Text("Igualar") }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(onClick = { musGameViewModel.realizarAccion(Accion.RETIRARSE) }) { Text("Retirarse") }
+                            Button(onClick = { musGameViewModel.realizarAccion(Accion.MUS) }) { Text("Mus") }
+                        }
                     }
                 }
-
-                if (!rondaActiva && cartasRepartidas) {
-                    Button(onClick = { musGameViewModel.reiniciar() }) {
-                        Text("Reiniciar Ronda")
+                items(acciones.size) { i ->
+                    Text(
+                        acciones[i],
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.fillMaxWidth().padding(4.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
+                item {
+                    if (!rondaActiva && cartasRepartidas && !rondaMusActiva) {
+                        Button(
+                            onClick = { musGameViewModel.reiniciar() },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Reiniciar Ronda")
+                        }
                     }
                 }
             }
         }
     }
 }
-
 
 @Composable
 fun CartaJugador(jugador: Jugador, esTurno: Boolean) {
@@ -127,13 +208,18 @@ fun CartaJugador(jugador: Jugador, esTurno: Boolean) {
                             .background(Color.LightGray),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = carta.toString())
+                        Text(carta.valor.toString())
                     }
                 }
             }
         }
     }
 }
+
+
+
+
+
 
 
 
