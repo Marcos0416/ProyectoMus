@@ -28,6 +28,9 @@ import com.example.appcarnavalextraordinaria.Navigation.Bars
 
 
 
+
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameViewModel = viewModel()) {
@@ -40,9 +43,11 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
     val acciones by musGameViewModel.acciones.collectAsState()
     val apuestaActual by musGameViewModel.apuestaActual.collectAsState()
     val ganadorGrande by musGameViewModel.ganadorGrande.collectAsState()
+    val ganadorChica by musGameViewModel.ganadorChica.collectAsState()
     val jugadoresActivos by musGameViewModel.jugadoresActivos.collectAsState()
     val cartasDescartadas by musGameViewModel.cartasDescartadas.collectAsState()
-    val ganadorChica by musGameViewModel.ganadorChica.collectAsState()
+
+    var cantidadSubir by remember { mutableStateOf("1") }
 
     Bars(navController = navController) { modifier ->
         Surface(
@@ -71,13 +76,28 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                 items(jugadores.size) { idx ->
                     CartaJugador(jugadores[idx], turno == idx)
                 }
+                // Mostrar ganadores de Grande y Chica al final de la ronda Chica
                 item {
-                    ganadorGrande?.let { ganador ->
-                        Text(
-                            "Ganador de Grande: ${ganador.nombre}",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
+                    if (!rondaActiva
+                        && cartasRepartidas
+                        && ganadorGrande != null
+                        && ganadorChica != null) {
+                        Column {
+                            Text(
+                                "Ganadores de ronda:",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                "Grande: ${ganadorGrande?.nombre ?: "Nadie"}",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.Blue
+                            )
+                            Text(
+                                "Chica: ${ganadorChica?.nombre ?: "Nadie"}",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.Red
+                            )
+                        }
                     }
                 }
                 item {
@@ -89,6 +109,7 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                 item {
                     Text(text = mensajes, fontSize = 18.sp)
                 }
+                // Descartes Mus
                 if (rondaMusActiva) {
                     item {
                         Text("Selecciona las cartas a descartar para: ${jugadores[turno].nombre}")
@@ -106,8 +127,7 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                                             interactionSource = remember { MutableInteractionSource() },
                                             indication = LocalIndication.current,
                                             onClick = { musGameViewModel.toggleDescartarCarta(turno, carta.id) }
-                                        )
-                                    ,
+                                        ),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(carta.valor.toString(), fontSize = 20.sp)
@@ -215,8 +235,6 @@ fun CartaJugador(jugador: Jugador, esTurno: Boolean) {
         }
     }
 }
-
-
 
 
 

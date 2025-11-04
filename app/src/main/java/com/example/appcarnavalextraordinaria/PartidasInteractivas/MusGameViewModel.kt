@@ -49,14 +49,17 @@ class MusGameViewModel : ViewModel() {
     private val _jugadorUltimaSubida = MutableStateFlow<Int?>(null)
     val jugadorUltimaSubida: StateFlow<Int?> = _jugadorUltimaSubida
 
-    private val _parejas = listOf(listOf(0, 2), listOf(1, 3))
-    private val _ganadorGrande = MutableStateFlow<Jugador?>(null)
-    val ganadorGrande: StateFlow<Jugador?> = _ganadorGrande
-
     private val _musPedidos = MutableStateFlow(MutableList(4) { false })
     val musPedidos: StateFlow<List<Boolean>> = _musPedidos
 
-    // Descarta cartas por ID
+    private val _ganadorGrande = MutableStateFlow<Jugador?>(null)
+    val ganadorGrande: StateFlow<Jugador?> = _ganadorGrande
+
+    private val _ganadorChica = MutableStateFlow<Jugador?>(null)
+    val ganadorChica: StateFlow<Jugador?> = _ganadorChica
+
+    private var rondaActual = "grande" // O "chica"
+
     private val _cartasDescartadas = MutableStateFlow(List(4) { emptyList<Int>() })
     val cartasDescartadas: StateFlow<List<List<Int>>> = _cartasDescartadas
 
@@ -69,7 +72,9 @@ class MusGameViewModel : ViewModel() {
             })
         }
         _cartasRepartidas.value = true
+        rondaActual = "grande"
         _rondaActiva.value = true
+        _rondaMusActiva.value = false
         _turno.value = 0
         _mensajes.value = "Cartas repartidas. Es tu turno."
         _acciones.value = emptyList()
@@ -77,7 +82,7 @@ class MusGameViewModel : ViewModel() {
         _jugadoresActivos.value = MutableList(4) { true }
         _jugadorUltimaSubida.value = null
         _ganadorGrande.value = null
-        _rondaMusActiva.value = false
+        _ganadorChica.value = null
         _cartasDescartadas.value = List(4) { emptyList() }
         _musPedidos.value = MutableList(4) { false }
     }
@@ -128,9 +133,25 @@ class MusGameViewModel : ViewModel() {
     }
 
     fun iniciarRondaGrande() {
+        rondaActual = "grande"
         _rondaActiva.value = true
         _mensajes.value = "Ronda de Grande iniciada. Apostar y jugar."
         _turno.value = 0
+        _apuestaActual.value = null
+        _acciones.value = emptyList()
+        _jugadoresActivos.value = MutableList(4) { true }
+        _jugadorUltimaSubida.value = null
+    }
+
+    fun iniciarRondaChica() {
+        rondaActual = "chica"
+        _rondaActiva.value = true
+        _mensajes.value = "Ronda de Chica iniciada. Apostar y jugar."
+        _turno.value = 0
+        _apuestaActual.value = null
+        _acciones.value = emptyList()
+        _jugadoresActivos.value = MutableList(4) { true }
+        _jugadorUltimaSubida.value = null
     }
 
     fun realizarAccion(accion: Accion, cantidad: Int? = null) {
@@ -170,15 +191,6 @@ class MusGameViewModel : ViewModel() {
         avanzarTurnoMus()
     }
 
-    fun iniciarRondaMus() {
-        _rondaMusActiva.value = true
-        _rondaActiva.value = false
-        _mensajes.value = "Ronda de Mus iniciada. Selecciona las cartas a descartar."
-        _turno.value = 0
-        _cartasDescartadas.value = List(4) { emptyList() } // Resetea descartes
-    }
-
-
     private fun avanzarTurnoMus() {
         val siguiente = (_turno.value + 1) % 4
         if (siguiente == 0) {
@@ -187,7 +199,8 @@ class MusGameViewModel : ViewModel() {
                 iniciarRondaMus()
             } else {
                 _rondaActiva.value = true
-                _mensajes.value = "Comienza la ronda de Grande"
+                _mensajes.value = if (rondaActual == "grande") "Comienza la ronda de Grande"
+                else "Comienza la ronda de Chica"
                 _turno.value = 0
             }
         } else {
@@ -203,7 +216,9 @@ class MusGameViewModel : ViewModel() {
             val idxGanador = activos.indexOfFirst { it }
             _rondaActiva.value = false
             _mensajes.value = "¡${_jugadores.value[idxGanador].nombre} gana la apuesta porque todos han pasado o se han retirado!"
-            _ganadorGrande.value = _jugadores.value[idxGanador]
+            if (rondaActual == "grande") _ganadorGrande.value = _jugadores.value[idxGanador]
+            if (rondaActual == "chica") _ganadorChica.value = _jugadores.value[idxGanador]
+            pasarApuestaOSiguienteRonda()
         }
     }
 
@@ -213,27 +228,56 @@ class MusGameViewModel : ViewModel() {
     }
 
     private fun finalizarApuesta() {
-        _ganadorGrande.value = calcularGanadorGrande()
-        _mensajes.value = "Apuesta finalizada. Ganador de Grande: ${_ganadorGrande.value?.nombre ?: "Nadie"}"
+        if (rondaActual == "grande") _ganadorGrande.value = calcularGanadorGrande()
+        if (rondaActual == "chica") _ganadorChica.value = calcularGanadorChica()
         _rondaActiva.value = false
+        _mensajes.value = when (rondaActual) {
+            "grande" -> "Apuesta finalizada. Ganador de Grande: ${_ganadorGrande.value?.nombre ?: "Nadie"}"
+            "chica" -> "Apuesta finalizada. Ganador de Chica: ${_ganadorChica.value?.nombre ?: "Nadie"}"
+            else -> ""
+        }
+        pasarApuestaOSiguienteRonda()
     }
-    private val _ganadorChica = MutableStateFlow<Jugador?>(null)
-    val ganadorChica: StateFlow<Jugador?> = _ganadorChica
 
-    fun iniciarRondaChica() {
-        _rondaActiva.value = true
-        _mensajes.value = "Ronda de Chica iniciada. Apostar y jugar."
+    private fun pasarApuestaOSiguienteRonda() {
+        if (rondaActual == "grande") {
+            iniciarRondaChica()
+        }
+    }
+
+    fun iniciarRondaMus() {
+        _rondaMusActiva.value = true
+        _rondaActiva.value = false
+        _mensajes.value = "Ronda de Mus iniciada. Selecciona las cartas a descartar."
         _turno.value = 0
-        // Resetea lo que necesites para la ronda de chica
+        _cartasDescartadas.value = List(4) { emptyList() }
     }
 
-    fun finalizarApuestaChica() {
-        _ganadorChica.value = calcularGanadorChica()
-        _mensajes.value = "Ronda de Chica finalizada. Ganador de Chica: ${_ganadorChica.value?.nombre ?: "Nadie"}"
-        _rondaActiva.value = false
-        // Aquí puedes mostrar los ganadores
-    }
+    fun reiniciar() { repartirCartas() }
 
+    // ----------- GRANDE -----------
+    private fun fuerzaCarta(carta: Int): Int = when (carta) {
+        3, 12 -> 13
+        11 -> 12
+        10 -> 11
+        7 -> 10
+        6 -> 9
+        5 -> 8
+        4 -> 7
+        2 -> 6
+        1 -> 5
+        else -> 0
+    }
+    private fun ordenarCartasGrande(cartas: List<Int>) = cartas.sortedByDescending { fuerzaCarta(it) }
+    private fun compararCartasGrande(cartas1: List<Int>, cartas2: List<Int>): Int {
+        val mano1 = ordenarCartasGrande(cartas1)
+        val mano2 = ordenarCartasGrande(cartas2)
+        for (i in mano1.indices) {
+            val diff = fuerzaCarta(mano1.getOrNull(i) ?: 0) - fuerzaCarta(mano2.getOrNull(i) ?: 0)
+            if (diff != 0) return diff
+        }
+        return 0
+    }
     private fun calcularGanadorGrande(): Jugador? {
         var ganador: Jugador? = null
         var mejorMano: List<Int>? = null
@@ -248,7 +292,29 @@ class MusGameViewModel : ViewModel() {
         }
         return ganador
     }
-    fun calcularGanadorChica(): Jugador? {
+    // ----------- CHICA -----------
+    private fun fuerzaCartaChica(carta: Int): Int = when (carta) {
+        1, 2 -> 1
+        4 -> 2
+        5 -> 3
+        6 -> 4
+        7 -> 5
+        10 -> 6
+        11 -> 7
+        3, 12 -> 8
+        else -> 9
+    }
+    private fun ordenarCartasChica(cartas: List<Int>) = cartas.sortedBy { fuerzaCartaChica(it) }
+    private fun compararCartasChica(cartas1: List<Int>, cartas2: List<Int>): Int {
+        val mano1 = ordenarCartasChica(cartas1)
+        val mano2 = ordenarCartasChica(cartas2)
+        for (i in mano1.indices) {
+            val diff = fuerzaCartaChica(mano1.getOrNull(i) ?: 0) - fuerzaCartaChica(mano2.getOrNull(i) ?: 0)
+            if (diff != 0) return -diff
+        }
+        return 0
+    }
+    private fun calcularGanadorChica(): Jugador? {
         var ganador: Jugador? = null
         var mejorMano: List<Int>? = null
         for (i in _jugadores.value.indices) {
@@ -262,74 +328,8 @@ class MusGameViewModel : ViewModel() {
         }
         return ganador
     }
-
-
-
-    private fun fuerzaCarta(carta: Int): Int {
-        // 3 y 12 son más altas, luego 11, 10, 7...1
-        return when (carta) {
-            3, 12 -> 13
-            11 -> 12
-            10 -> 11
-            7 -> 10
-            6 -> 9
-            5 -> 8
-            4 -> 7
-            2 -> 6
-            1 -> 5
-            else -> 0
-        }
-    }
-
-    private fun fuerzaCartaChica(carta: Int): Int {
-        // 1 y 2 equivalen y son lo más bajo (ganan), luego 4,5,6,7,10,11, y por último 3 y 12 empatados (pierden)
-        return when (carta) {
-            1, 2 -> 1
-            4 -> 2
-            5 -> 3
-            6 -> 4
-            7 -> 5
-            10 -> 6
-            11 -> 7
-            3, 12 -> 8 // más altos en chica
-            else -> 9
-        }
-    }
-
-    private fun ordenarCartasChica(cartas: List<Int>): List<Int> {
-        return cartas.sortedBy { fuerzaCartaChica(it) }
-    }
-
-
-    private fun ordenarCartasGrande(cartas: List<Int>): List<Int> {
-        return cartas.sortedByDescending { fuerzaCarta(it) }
-    }
-
-    private fun compararCartasGrande(cartas1: List<Int>, cartas2: List<Int>): Int {
-        val mano1 = ordenarCartasGrande(cartas1)
-        val mano2 = ordenarCartasGrande(cartas2)
-        for (i in mano1.indices) {
-            val diff = fuerzaCarta(mano1.getOrNull(i) ?: 0) - fuerzaCarta(mano2.getOrNull(i) ?: 0)
-            if (diff != 0) return diff
-        }
-        return 0
-    }
-    private fun compararCartasChica(cartas1: List<Int>, cartas2: List<Int>): Int {
-        val mano1 = ordenarCartasChica(cartas1)
-        val mano2 = ordenarCartasChica(cartas2)
-        for (i in mano1.indices) {
-            val diff = fuerzaCartaChica(mano1.getOrNull(i) ?: 0) - fuerzaCartaChica(mano2.getOrNull(i) ?: 0)
-            if (diff != 0) return -diff // MENOR gana, así que invertimos el signo respecto a grande
-        }
-        return 0
-    }
-
-
-    fun reiniciar() {
-        repartirCartas()
-    }
-
 }
+
 
 
 
