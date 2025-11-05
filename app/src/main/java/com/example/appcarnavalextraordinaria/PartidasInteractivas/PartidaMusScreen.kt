@@ -1,5 +1,7 @@
 package com.example.appcarnavalextraordinaria.PartidasInteractivas
 
+
+
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,16 +27,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.appcarnavalextraordinaria.Navigation.Bars
 
-
-
-
-
-
-
-
-
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameViewModel = viewModel()) {
@@ -51,6 +43,7 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
     val ganadorChica by musGameViewModel.ganadorChica.collectAsState()
     val ganadorPares by musGameViewModel.ganadorPares.collectAsState()
     val resultadosPares by musGameViewModel.resultadosPares.collectAsState()
+    val jugadoresConPares by musGameViewModel.jugadoresConPares.collectAsState()
     val jugadoresActivos by musGameViewModel.jugadoresActivos.collectAsState()
     val cartasDescartadas by musGameViewModel.cartasDescartadas.collectAsState()
 
@@ -95,10 +88,13 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                                 style = MaterialTheme.typography.titleMedium,
                                 color = Color.Magenta
                             )
-                            resultadosPares.forEach { resultado ->
+                            resultadosPares.forEachIndexed { index, resultado ->
+                                val tienePares = jugadoresConPares.getOrNull(index) ?: false
                                 Text(
-                                    "${resultado.jugador.nombre}: ${obtenerNombreCombinacion(resultado.combinacion)}",
-                                    style = MaterialTheme.typography.bodyMedium
+                                    "${resultado.jugador.nombre}: ${obtenerNombreCombinacion(resultado.combinacion)}" +
+                                            if (!tienePares) " (Sin pares)" else "",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (tienePares) Color.Unspecified else Color.Gray
                                 )
                             }
                         }
@@ -106,7 +102,9 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                 }
 
                 items(jugadores.size) { idx ->
-                    CartaJugador(jugadores[idx], turno == idx)
+                    CartaJugador(jugadores[idx], turno == idx,
+                        jugadoresConPares.getOrNull(idx) == true,
+                        jugadoresActivos.getOrNull(idx) == true)
                 }
 
                 // Mostrar ganadores
@@ -129,7 +127,7 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                             }
                             if (ganadorPares != null) {
                                 Text(
-                                    "Pares: ${ganadorPares?.nombre ?: "Nadie"}",
+                                    "Pares: ${ganadorPares!!.first.nombre} y ${ganadorPares!!.second.nombre}",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = Color.Green
                                 )
@@ -190,6 +188,17 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                 } else if (rondaActiva && jugadoresActivos[turno]) {
                     item {
                         Text("Turno de: ${jugadores[turno].nombre}", style = MaterialTheme.typography.titleMedium)
+
+                        // En ronda de pares, mostrar si el jugador tiene pares
+                        if (rondaParesActiva) {
+                            val tienePares = jugadoresConPares.getOrNull(turno) == true
+                            Text(
+                                if (tienePares) "Tiene pares - Puede apostar" else "No tiene pares - No puede apostar",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (tienePares) Color.Green else Color.Red
+                            )
+                        }
+
                         TextField(
                             value = cantidadSubir,
                             onValueChange = { newValue ->
@@ -252,16 +261,32 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
 }
 
 @Composable
-fun CartaJugador(jugador: Jugador, esTurno: Boolean) {
+fun CartaJugador(jugador: Jugador, esTurno: Boolean, tienePares: Boolean, estaActivo: Boolean) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
-            .background(if (esTurno) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.Transparent),
+            .background(
+                when {
+                    !estaActivo -> Color.LightGray.copy(alpha = 0.5f)
+                    esTurno -> MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                    else -> Color.Transparent
+                }
+            ),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Column(Modifier.padding(12.dp)) {
-            Text(jugador.nombre, style = MaterialTheme.typography.titleMedium)
+            Text(
+                jugador.nombre +
+                        (if (!estaActivo) " (No activo)" else "") +
+                        (if (tienePares) " ✓" else ""),
+                style = MaterialTheme.typography.titleMedium,
+                color = when {
+                    !estaActivo -> Color.Gray
+                    tienePares -> Color.Green
+                    else -> Color.Unspecified
+                }
+            )
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -291,7 +316,6 @@ private fun obtenerNombreCombinacion(combinacion: CombinacionPares): String {
         else -> "Desconocido"
     }
 }
-
 
 
 

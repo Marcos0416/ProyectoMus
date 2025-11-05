@@ -5,6 +5,7 @@ package com.example.appcarnavalextraordinaria.PartidasInteractivas
 
 
 
+
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -78,8 +79,8 @@ class MusGameViewModel : ViewModel() {
     private val _ganadorChica = MutableStateFlow<Jugador?>(null)
     val ganadorChica: StateFlow<Jugador?> = _ganadorChica
 
-    private val _ganadorPares = MutableStateFlow<Jugador?>(null)
-    val ganadorPares: StateFlow<Jugador?> = _ganadorPares
+    private val _ganadorPares = MutableStateFlow<Pair<Jugador, Jugador>?>(null)
+    val ganadorPares: StateFlow<Pair<Jugador, Jugador>?> = _ganadorPares
 
     private val _rondaParesActiva = MutableStateFlow(false)
     val rondaParesActiva: StateFlow<Boolean> = _rondaParesActiva
@@ -87,11 +88,20 @@ class MusGameViewModel : ViewModel() {
     private val _resultadosPares = MutableStateFlow<List<ResultadoPares>>(emptyList())
     val resultadosPares: StateFlow<List<ResultadoPares>> = _resultadosPares
 
+    private val _jugadoresConPares = MutableStateFlow<List<Boolean>>(emptyList())
+    val jugadoresConPares: StateFlow<List<Boolean>> = _jugadoresConPares
+
     private var rondaActual = "grande"
     private var jugadorInicioPartida = 0
 
     private val _cartasDescartadas = MutableStateFlow(List(4) { emptyList<Int>() })
     val cartasDescartadas: StateFlow<List<List<Int>>> = _cartasDescartadas
+
+    // Definir parejas (0-1 y 2-3)
+    private val parejas = listOf(
+        listOf(0, 1), // Tú y Bot 1
+        listOf(2, 3)  // Bot 2 y Bot 3
+    )
 
     fun repartirCartas() {
         val cartasValidas = (1..12).filterNot { it == 8 || it == 9 }
@@ -117,6 +127,7 @@ class MusGameViewModel : ViewModel() {
         _ganadorChica.value = null
         _ganadorPares.value = null
         _resultadosPares.value = emptyList()
+        _jugadoresConPares.value = emptyList()
         _cartasDescartadas.value = List(4) { emptyList() }
         _musPedidos.value = MutableList(4) { false }
     }
@@ -193,15 +204,34 @@ class MusGameViewModel : ViewModel() {
         _rondaActiva.value = true
         _rondaParesActiva.value = true
         _mensajes.value = "Ronda de Pares iniciada. Verificando pares..."
-        _turno.value = jugadorInicioPartida
-        _apuestaActual.value = null
-        _acciones.value = emptyList()
-        _jugadoresActivos.value = MutableList(4) { true }
-        _jugadorUltimaSubida.value = null
 
-        // Verificar si hay pares
+        // Verificar qué jugadores tienen pares
         val resultados = verificarPares()
         _resultadosPares.value = resultados
+
+        // Determinar qué jugadores tienen pares
+        val conPares = resultados.map { it.combinacion !is SinPares }
+        _jugadoresConPares.value = conPares
+
+        // Determinar qué parejas tienen pares (al menos un jugador con pares)
+        val parejasConPares = parejas.map { pareja ->
+            pareja.any { conPares[it] }
+        }
+
+        // Solo las parejas con pares pueden participar
+        val nuevosActivos = MutableList(4) { index ->
+            val parejaIndex = if (index <= 1) 0 else 1
+            parejasConPares[parejaIndex]
+        }
+        _jugadoresActivos.value = nuevosActivos
+
+        // Encontrar el primer jugador activo para empezar
+        val primerJugadorActivo = nuevosActivos.indexOfFirst { it }
+        _turno.value = if (primerJugadorActivo != -1) primerJugadorActivo else 0
+
+        _apuestaActual.value = null
+        _acciones.value = emptyList()
+        _jugadorUltimaSubida.value = null
 
         if (resultados.all { it.combinacion is SinPares }) {
             _mensajes.value = "Ningún jugador tiene pares. Pasando a siguiente ronda..."
@@ -209,12 +239,35 @@ class MusGameViewModel : ViewModel() {
                 finalizarRondaParesSinGanador()
             }, 2000)
         } else {
-            _mensajes.value = "Hay pares en la mesa. Comienza ${_jugadores.value[jugadorInicioPartida].nombre}"
+            val parejasActivas = parejasConPares.count { it }
+            _mensajes.value = when (parejasActivas) {
+                1 -> "Solo una pareja tiene pares. Ganadores automáticos."
+                2 -> "Ambas parejas tienen pares. Comienza ${_jugadores.value[_turno.value].nombre}"
+                else -> "Ronda de Pares iniciada"
+            }
+
+            // Si solo una pareja tiene pares, ganan automáticamente
+            if (parejasActivas == 1) {
+                Handler(Looper.getMainLooper()).postDelayed({
+                    finalizarRondaParesConGanadorAutomatico()
+                }, 2000)
+            }
         }
     }
 
     fun realizarAccion(accion: Accion, cantidad: Int? = null) {
+        // En la ronda de pares, solo los jugadores de parejas con pares pueden actuar
+        if (rondaActual == "pares") {
+            val parejaIndex = if (_turno.value <= 1) 0 else 1
+            val parejaTienePares = parejas[parejaIndex].any { _jugadoresConPares.value[it] }
+            if (!parejaTienePares) {
+                // Esta pareja no tiene pares, no puede actuar
+                return
+            }
+        }
+
         if (!_rondaActiva.value || !_jugadoresActivos.value[_turno.value]) return
+
         val jugadorActual = _jugadores.value[_turno.value]
         val log = _acciones.value.toMutableList()
         when (accion) {
@@ -247,29 +300,37 @@ class MusGameViewModel : ViewModel() {
             }
         }
         _acciones.value = log
-        avanzarTurnoMus()
+
+        // Avanzar turno solo a jugadores activos (de parejas con pares)
+        avanzarTurnoPares()
     }
 
-    private fun avanzarTurnoMus() {
-        val siguiente = (_turno.value + 1) % 4
-        if (siguiente == 0) {
-            if (_musPedidos.value.all { it }) {
-                _musPedidos.value = MutableList(4) { false }
-                iniciarRondaMus()
-            } else {
-                _rondaActiva.value = true
-                _mensajes.value = when (rondaActual) {
-                    "grande" -> "Comienza la ronda de Grande"
-                    "chica" -> "Comienza la ronda de Chica"
-                    "pares" -> "Comienza la ronda de Pares"
-                    else -> "Comienza la ronda"
-                }
-                _turno.value = 0
-            }
-        } else {
-            _turno.value = siguiente
-            _mensajes.value = "Turno de ${_jugadores.value[siguiente].nombre}"
+    private fun avanzarTurnoPares() {
+        if (rondaActual != "pares") {
+            avanzarTurnoMus()
+            return
         }
+
+        var siguiente = (_turno.value + 1) % 4
+        var intentos = 0
+
+        // Buscar siguiente jugador activo (de pareja con pares)
+        while (intentos < 4) {
+            val parejaIndex = if (siguiente <= 1) 0 else 1
+            val parejaTienePares = parejas[parejaIndex].any { _jugadoresConPares.value[it] }
+
+            if (parejaTienePares && _jugadoresActivos.value[siguiente]) {
+                _turno.value = siguiente
+                _mensajes.value = "Turno de ${_jugadores.value[siguiente].nombre}"
+                return
+            }
+
+            siguiente = (siguiente + 1) % 4
+            intentos++
+        }
+
+        // Si no hay más jugadores activos, finalizar
+        _turno.value = siguiente
     }
 
     private fun comprobarUnicoActivo() {
@@ -282,7 +343,11 @@ class MusGameViewModel : ViewModel() {
             when (rondaActual) {
                 "grande" -> _ganadorGrande.value = _jugadores.value[idxGanador]
                 "chica" -> _ganadorChica.value = _jugadores.value[idxGanador]
-                "pares" -> _ganadorPares.value = _jugadores.value[idxGanador]
+                "pares" -> {
+                    // En pares, el ganador es la pareja completa
+                    val parejaIndex = if (idxGanador <= 1) 0 else 1
+                    _ganadorPares.value = _jugadores.value[parejas[parejaIndex][0]] to _jugadores.value[parejas[parejaIndex][1]]
+                }
             }
             pasarApuestaOSiguienteRonda()
         }
@@ -303,7 +368,10 @@ class MusGameViewModel : ViewModel() {
         _mensajes.value = when (rondaActual) {
             "grande" -> "Apuesta finalizada. Ganador de Grande: ${_ganadorGrande.value?.nombre ?: "Nadie"}"
             "chica" -> "Apuesta finalizada. Ganador de Chica: ${_ganadorChica.value?.nombre ?: "Nadie"}"
-            "pares" -> "Apuesta finalizada. Ganador de Pares: ${_ganadorPares.value?.nombre ?: "Nadie"}"
+            "pares" -> {
+                val ganadores = _ganadorPares.value
+                "Apuesta finalizada. Ganadores de Pares: ${ganadores?.first?.nombre ?: "Nadie"} y ${ganadores?.second?.nombre ?: "Nadie"}"
+            }
             else -> ""
         }
         pasarApuestaOSiguienteRonda()
@@ -461,34 +529,46 @@ class MusGameViewModel : ViewModel() {
         }
     }
 
-    private fun calcularGanadorPares(): Jugador? {
+    private fun calcularGanadorPares(): Pair<Jugador, Jugador>? {
         val resultados = _resultadosPares.value
-        var mejorResultado: ResultadoPares? = null
 
-        // Encontrar la mejor combinación entre jugadores activos
-        for (resultado in resultados) {
-            val jugadorIndex = _jugadores.value.indexOf(resultado.jugador)
-            if (_jugadoresActivos.value[jugadorIndex]) {
-                if (mejorResultado == null || resultado.valorCombinacion > mejorResultado.valorCombinacion) {
-                    mejorResultado = resultado
-                } else if (resultado.valorCombinacion == mejorResultado.valorCombinacion) {
-                    // Empate - desempate por jugador que empezó hablando
-                    val jugadorActualIndex = _jugadores.value.indexOf(resultado.jugador)
-                    val mejorJugadorIndex = _jugadores.value.indexOf(mejorResultado.jugador)
+        // Calcular la mejor combinación por pareja
+        val mejorPareja1 = resultados
+            .filterIndexed { index, _ -> index <= 1 }
+            .maxByOrNull { it.valorCombinacion }
 
-                    // Si el jugador actual es el que empezó hablando, gana
-                    if (jugadorActualIndex == jugadorInicioPartida) {
-                        mejorResultado = resultado
-                    }
-                    // Si el mejor actual no es el que empezó pero el nuevo sí, cambiamos
-                    else if (mejorJugadorIndex != jugadorInicioPartida && jugadorActualIndex == jugadorInicioPartida) {
-                        mejorResultado = resultado
-                    }
+        val mejorPareja2 = resultados
+            .filterIndexed { index, _ -> index >= 2 }
+            .maxByOrNull { it.valorCombinacion }
+
+        // Si una pareja no tiene pares, la otra gana automáticamente
+        if (mejorPareja1?.combinacion is SinPares && mejorPareja2?.combinacion is SinPares) {
+            return null
+        }
+
+        if (mejorPareja1?.combinacion is SinPares) {
+            return _jugadores.value[2] to _jugadores.value[3]
+        }
+
+        if (mejorPareja2?.combinacion is SinPares) {
+            return _jugadores.value[0] to _jugadores.value[1]
+        }
+
+        // Comparar las mejores combinaciones de cada pareja
+        val comparacion = (mejorPareja1?.valorCombinacion ?: 0) - (mejorPareja2?.valorCombinacion ?: 0)
+
+        return when {
+            comparacion > 0 -> _jugadores.value[0] to _jugadores.value[1]
+            comparacion < 0 -> _jugadores.value[2] to _jugadores.value[3]
+            else -> {
+                // Empate - gana la pareja del jugador que empezó hablando
+                if (jugadorInicioPartida <= 1) {
+                    _jugadores.value[0] to _jugadores.value[1]
+                } else {
+                    _jugadores.value[2] to _jugadores.value[3]
                 }
             }
         }
-
-        return mejorResultado?.jugador
     }
 
     private fun finalizarRondaParesSinGanador() {
@@ -497,6 +577,49 @@ class MusGameViewModel : ViewModel() {
         _rondaParesActiva.value = false
         _mensajes.value = "Ronda de Pares finalizada sin ganadores"
         pasarApuestaOSiguienteRonda()
+    }
+
+    private fun finalizarRondaParesConGanadorAutomatico() {
+        val resultados = _resultadosPares.value
+        val pareja1TienePares = resultados[0].combinacion !is SinPares || resultados[1].combinacion !is SinPares
+        val pareja2TienePares = resultados[2].combinacion !is SinPares || resultados[3].combinacion !is SinPares
+
+        _ganadorPares.value = when {
+            pareja1TienePares && !pareja2TienePares -> _jugadores.value[0] to _jugadores.value[1]
+            !pareja1TienePares && pareja2TienePares -> _jugadores.value[2] to _jugadores.value[3]
+            else -> null
+        }
+
+        _rondaActiva.value = false
+        _rondaParesActiva.value = false
+        _mensajes.value = if (_ganadorPares.value != null) {
+            "Ganadores automáticos de Pares: ${_ganadorPares.value!!.first.nombre} y ${_ganadorPares.value!!.second.nombre}"
+        } else {
+            "Ronda de Pares finalizada sin ganadores"
+        }
+        pasarApuestaOSiguienteRonda()
+    }
+
+    private fun avanzarTurnoMus() {
+        val siguiente = (_turno.value + 1) % 4
+        if (siguiente == 0) {
+            if (_musPedidos.value.all { it }) {
+                _musPedidos.value = MutableList(4) { false }
+                iniciarRondaMus()
+            } else {
+                _rondaActiva.value = true
+                _mensajes.value = when (rondaActual) {
+                    "grande" -> "Comienza la ronda de Grande"
+                    "chica" -> "Comienza la ronda de Chica"
+                    "pares" -> "Comienza la ronda de Pares"
+                    else -> "Comienza la ronda"
+                }
+                _turno.value = 0
+            }
+        } else {
+            _turno.value = siguiente
+            _mensajes.value = "Turno de ${_jugadores.value[siguiente].nombre}"
+        }
     }
 }
 
