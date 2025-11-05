@@ -310,9 +310,63 @@ fun CartaJugador(jugador: Jugador, esTurno: Boolean, tienePares: Boolean, estaAc
 private fun obtenerNombreCombinacion(combinacion: CombinacionPares): String {
     return when (combinacion) {
         is SinPares -> "Sin pares"
-        is Par -> "Par de ${combinacion.valorCarta}"
-        is Medias -> "Medias de ${combinacion.valorCarta}"
-        is Duples -> "Duples de ${combinacion.valorCarta1} y ${combinacion.valorCarta2}"
+        is Par -> {
+            val nombreCarta = when (combinacion.valorCarta) {
+                3 -> "Reyes"
+                11 -> "Caballos"
+                10 -> "Sotas"
+                7 -> "Sietes"
+                6 -> "Seis"
+                5 -> "Cincos"
+                4 -> "Cuatros"
+                2 -> "Dos"
+                1 -> "Ases"
+                else -> combinacion.valorCarta.toString()
+            }
+            "Par de $nombreCarta"
+        }
+        is Medias -> {
+            val nombreCarta = when (combinacion.valorCarta) {
+                3 -> "Reyes"
+                11 -> "Caballos"
+                10 -> "Sotas"
+                7 -> "Sietes"
+                6 -> "Seis"
+                5 -> "Cincos"
+                4 -> "Cuatros"
+                2 -> "Dos"
+                1 -> "Ases"
+                else -> combinacion.valorCarta.toString()
+            }
+            "Medias de $nombreCarta"
+        }
+        is Duples -> {
+            val nombreCarta1 = when (combinacion.valorCarta1) {
+                3 -> "Reyes"
+                11 -> "Caballos"
+                10 -> "Sotas"
+                7 -> "Sietes"
+                6 -> "Seis"
+                5 -> "Cincos"
+                4 -> "Cuatros"
+                2 -> "Dos"
+                1 -> "Ases"
+                else -> combinacion.valorCarta1.toString()
+            }
+            val nombreCarta2 = when (combinacion.valorCarta2) {
+                3 -> "Reyes"
+                11 -> "Caballos"
+                10 -> "Sotas"
+                7 -> "Sietes"
+                6 -> "Seis"
+                5 -> "Cincos"
+                4 -> "Cuatros"
+                2 -> "Dos"
+                1 -> "Ases"
+                else -> combinacion.valorCarta2.toString()
+            }
+            "Duples de $nombreCarta1 y $nombreCarta2"
+        }
         else -> "Desconocido"
     }
 }
