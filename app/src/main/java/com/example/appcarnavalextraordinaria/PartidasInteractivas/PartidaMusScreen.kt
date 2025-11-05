@@ -31,6 +31,10 @@ import com.example.appcarnavalextraordinaria.Navigation.Bars
 
 
 
+
+
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameViewModel = viewModel()) {
@@ -40,10 +44,13 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
     val cartasRepartidas by musGameViewModel.cartasRepartidas.collectAsState()
     val rondaActiva by musGameViewModel.rondaActiva.collectAsState()
     val rondaMusActiva by musGameViewModel.rondaMusActiva.collectAsState()
+    val rondaParesActiva by musGameViewModel.rondaParesActiva.collectAsState()
     val acciones by musGameViewModel.acciones.collectAsState()
     val apuestaActual by musGameViewModel.apuestaActual.collectAsState()
     val ganadorGrande by musGameViewModel.ganadorGrande.collectAsState()
     val ganadorChica by musGameViewModel.ganadorChica.collectAsState()
+    val ganadorPares by musGameViewModel.ganadorPares.collectAsState()
+    val resultadosPares by musGameViewModel.resultadosPares.collectAsState()
     val jugadoresActivos by musGameViewModel.jugadoresActivos.collectAsState()
     val cartasDescartadas by musGameViewModel.cartasDescartadas.collectAsState()
 
@@ -73,33 +80,71 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                         }
                     }
                 }
-                items(jugadores.size) { idx ->
-                    CartaJugador(jugadores[idx], turno == idx)
-                }
-                // Mostrar ganadores de Grande y Chica al final de la ronda Chica
+
+                // Mostrar información de pares si está activa la ronda
                 item {
-                    if (!rondaActiva
-                        && cartasRepartidas
-                        && ganadorGrande != null
-                        && ganadorChica != null) {
-                        Column {
+                    if (rondaParesActiva) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color.LightGray.copy(alpha = 0.3f))
+                                .padding(8.dp)
+                        ) {
                             Text(
-                                "Ganadores de ronda:",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                "Grande: ${ganadorGrande?.nombre ?: "Nadie"}",
+                                "Ronda de Pares - Combinaciones:",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = Color.Blue
+                                color = Color.Magenta
                             )
-                            Text(
-                                "Chica: ${ganadorChica?.nombre ?: "Nadie"}",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = Color.Red
-                            )
+                            resultadosPares.forEach { resultado ->
+                                Text(
+                                    "${resultado.jugador.nombre}: ${obtenerNombreCombinacion(resultado.combinacion)}",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
                         }
                     }
                 }
+
+                items(jugadores.size) { idx ->
+                    CartaJugador(jugadores[idx], turno == idx)
+                }
+
+                // Mostrar ganadores
+                item {
+                    if (!rondaActiva && cartasRepartidas) {
+                        Column {
+                            if (ganadorGrande != null) {
+                                Text(
+                                    "Grande: ${ganadorGrande?.nombre ?: "Nadie"}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color.Blue
+                                )
+                            }
+                            if (ganadorChica != null) {
+                                Text(
+                                    "Chica: ${ganadorChica?.nombre ?: "Nadie"}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color.Red
+                                )
+                            }
+                            if (ganadorPares != null) {
+                                Text(
+                                    "Pares: ${ganadorPares?.nombre ?: "Nadie"}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color.Green
+                                )
+                            }
+                            if (ganadorGrande != null && ganadorChica != null && ganadorPares != null) {
+                                Text(
+                                    "Partida terminada!",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                }
+
                 item {
                     Text(
                         "Apuesta actual: ${apuestaActual?.cantidad ?: 0} piedras",
@@ -109,6 +154,7 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                 item {
                     Text(text = mensajes, fontSize = 18.sp)
                 }
+
                 // Descartes Mus
                 if (rondaMusActiva) {
                     item {
@@ -144,9 +190,6 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                 } else if (rondaActiva && jugadoresActivos[turno]) {
                     item {
                         Text("Turno de: ${jugadores[turno].nombre}", style = MaterialTheme.typography.titleMedium)
-                        var cantidadSubir by remember { mutableStateOf("1") } // almacena la cantidad de subida
-
-
                         TextField(
                             value = cantidadSubir,
                             onValueChange = { newValue ->
@@ -183,6 +226,7 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                         }
                     }
                 }
+
                 items(acciones.size) { i ->
                     Text(
                         acciones[i],
@@ -191,6 +235,7 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                         textAlign = TextAlign.Center
                     )
                 }
+
                 item {
                     if (!rondaActiva && cartasRepartidas && !rondaMusActiva) {
                         Button(
@@ -235,6 +280,18 @@ fun CartaJugador(jugador: Jugador, esTurno: Boolean) {
         }
     }
 }
+
+// Función auxiliar para obtener el nombre de la combinación
+private fun obtenerNombreCombinacion(combinacion: CombinacionPares): String {
+    return when (combinacion) {
+        is SinPares -> "Sin pares"
+        is Par -> "Par de ${combinacion.valorCarta}"
+        is Medias -> "Medias de ${combinacion.valorCarta}"
+        is Duples -> "Duples de ${combinacion.valorCarta1} y ${combinacion.valorCarta2}"
+        else -> "Desconocido"
+    }
+}
+
 
 
 

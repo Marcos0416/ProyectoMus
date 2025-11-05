@@ -1,13 +1,33 @@
 package com.example.appcarnavalextraordinaria.PartidasInteractivas
 
+
+
+
+
+
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import android.os.Handler
+import android.os.Looper
 
 data class Carta(val id: Int, val valor: Int)
 data class Jugador(val nombre: String, val esHumano: Boolean, val cartas: List<Carta> = emptyList())
 enum class Accion { PASAR, ENVIDAR, SUBIR, IGUALAR, RETIRARSE, MUS }
 data class Apuesta(val cantidad: Int, val jugador: Jugador)
+
+// Combinaciones de pares
+sealed class CombinacionPares
+object SinPares : CombinacionPares()
+data class Par(val valorCarta: Int) : CombinacionPares()
+data class Medias(val valorCarta: Int) : CombinacionPares()
+data class Duples(val valorCarta1: Int, val valorCarta2: Int) : CombinacionPares()
+
+data class ResultadoPares(
+    val combinacion: CombinacionPares,
+    val jugador: Jugador,
+    val valorCombinacion: Int = 0
+)
 
 class MusGameViewModel : ViewModel() {
     private var siguienteIdCarta = 0
@@ -58,7 +78,17 @@ class MusGameViewModel : ViewModel() {
     private val _ganadorChica = MutableStateFlow<Jugador?>(null)
     val ganadorChica: StateFlow<Jugador?> = _ganadorChica
 
-    private var rondaActual = "grande" // O "chica"
+    private val _ganadorPares = MutableStateFlow<Jugador?>(null)
+    val ganadorPares: StateFlow<Jugador?> = _ganadorPares
+
+    private val _rondaParesActiva = MutableStateFlow(false)
+    val rondaParesActiva: StateFlow<Boolean> = _rondaParesActiva
+
+    private val _resultadosPares = MutableStateFlow<List<ResultadoPares>>(emptyList())
+    val resultadosPares: StateFlow<List<ResultadoPares>> = _resultadosPares
+
+    private var rondaActual = "grande"
+    private var jugadorInicioPartida = 0
 
     private val _cartasDescartadas = MutableStateFlow(List(4) { emptyList<Int>() })
     val cartasDescartadas: StateFlow<List<List<Int>>> = _cartasDescartadas
@@ -75,7 +105,9 @@ class MusGameViewModel : ViewModel() {
         rondaActual = "grande"
         _rondaActiva.value = true
         _rondaMusActiva.value = false
+        _rondaParesActiva.value = false
         _turno.value = 0
+        jugadorInicioPartida = 0
         _mensajes.value = "Cartas repartidas. Es tu turno."
         _acciones.value = emptyList()
         _apuestaActual.value = null
@@ -83,6 +115,8 @@ class MusGameViewModel : ViewModel() {
         _jugadorUltimaSubida.value = null
         _ganadorGrande.value = null
         _ganadorChica.value = null
+        _ganadorPares.value = null
+        _resultadosPares.value = emptyList()
         _cartasDescartadas.value = List(4) { emptyList() }
         _musPedidos.value = MutableList(4) { false }
     }
@@ -154,6 +188,31 @@ class MusGameViewModel : ViewModel() {
         _jugadorUltimaSubida.value = null
     }
 
+    fun iniciarRondaPares() {
+        rondaActual = "pares"
+        _rondaActiva.value = true
+        _rondaParesActiva.value = true
+        _mensajes.value = "Ronda de Pares iniciada. Verificando pares..."
+        _turno.value = jugadorInicioPartida
+        _apuestaActual.value = null
+        _acciones.value = emptyList()
+        _jugadoresActivos.value = MutableList(4) { true }
+        _jugadorUltimaSubida.value = null
+
+        // Verificar si hay pares
+        val resultados = verificarPares()
+        _resultadosPares.value = resultados
+
+        if (resultados.all { it.combinacion is SinPares }) {
+            _mensajes.value = "Ningún jugador tiene pares. Pasando a siguiente ronda..."
+            Handler(Looper.getMainLooper()).postDelayed({
+                finalizarRondaParesSinGanador()
+            }, 2000)
+        } else {
+            _mensajes.value = "Hay pares en la mesa. Comienza ${_jugadores.value[jugadorInicioPartida].nombre}"
+        }
+    }
+
     fun realizarAccion(accion: Accion, cantidad: Int? = null) {
         if (!_rondaActiva.value || !_jugadoresActivos.value[_turno.value]) return
         val jugadorActual = _jugadores.value[_turno.value]
@@ -199,8 +258,12 @@ class MusGameViewModel : ViewModel() {
                 iniciarRondaMus()
             } else {
                 _rondaActiva.value = true
-                _mensajes.value = if (rondaActual == "grande") "Comienza la ronda de Grande"
-                else "Comienza la ronda de Chica"
+                _mensajes.value = when (rondaActual) {
+                    "grande" -> "Comienza la ronda de Grande"
+                    "chica" -> "Comienza la ronda de Chica"
+                    "pares" -> "Comienza la ronda de Pares"
+                    else -> "Comienza la ronda"
+                }
                 _turno.value = 0
             }
         } else {
@@ -216,8 +279,11 @@ class MusGameViewModel : ViewModel() {
             val idxGanador = activos.indexOfFirst { it }
             _rondaActiva.value = false
             _mensajes.value = "¡${_jugadores.value[idxGanador].nombre} gana la apuesta porque todos han pasado o se han retirado!"
-            if (rondaActual == "grande") _ganadorGrande.value = _jugadores.value[idxGanador]
-            if (rondaActual == "chica") _ganadorChica.value = _jugadores.value[idxGanador]
+            when (rondaActual) {
+                "grande" -> _ganadorGrande.value = _jugadores.value[idxGanador]
+                "chica" -> _ganadorChica.value = _jugadores.value[idxGanador]
+                "pares" -> _ganadorPares.value = _jugadores.value[idxGanador]
+            }
             pasarApuestaOSiguienteRonda()
         }
     }
@@ -228,20 +294,29 @@ class MusGameViewModel : ViewModel() {
     }
 
     private fun finalizarApuesta() {
-        if (rondaActual == "grande") _ganadorGrande.value = calcularGanadorGrande()
-        if (rondaActual == "chica") _ganadorChica.value = calcularGanadorChica()
+        when (rondaActual) {
+            "grande" -> _ganadorGrande.value = calcularGanadorGrande()
+            "chica" -> _ganadorChica.value = calcularGanadorChica()
+            "pares" -> _ganadorPares.value = calcularGanadorPares()
+        }
         _rondaActiva.value = false
         _mensajes.value = when (rondaActual) {
             "grande" -> "Apuesta finalizada. Ganador de Grande: ${_ganadorGrande.value?.nombre ?: "Nadie"}"
             "chica" -> "Apuesta finalizada. Ganador de Chica: ${_ganadorChica.value?.nombre ?: "Nadie"}"
+            "pares" -> "Apuesta finalizada. Ganador de Pares: ${_ganadorPares.value?.nombre ?: "Nadie"}"
             else -> ""
         }
         pasarApuestaOSiguienteRonda()
     }
 
     private fun pasarApuestaOSiguienteRonda() {
-        if (rondaActual == "grande") {
-            iniciarRondaChica()
+        when (rondaActual) {
+            "grande" -> iniciarRondaChica()
+            "chica" -> iniciarRondaPares()
+            "pares" -> {
+                _mensajes.value = "Ronda de Pares finalizada. Partida terminada."
+                _rondaParesActiva.value = false
+            }
         }
     }
 
@@ -292,6 +367,7 @@ class MusGameViewModel : ViewModel() {
         }
         return ganador
     }
+
     // ----------- CHICA -----------
     private fun fuerzaCartaChica(carta: Int): Int = when (carta) {
         1, 2 -> 1
@@ -328,7 +404,102 @@ class MusGameViewModel : ViewModel() {
         }
         return ganador
     }
+
+    // ----------- PARES -----------
+    private fun verificarPares(): List<ResultadoPares> {
+        return _jugadores.value.map { jugador ->
+            val combinacion = detectarCombinacionPares(jugador.cartas.map { it.valor })
+            val valorCombinacion = calcularValorCombinacion(combinacion)
+            ResultadoPares(combinacion, jugador, valorCombinacion)
+        }
+    }
+
+    private fun detectarCombinacionPares(cartas: List<Int>): CombinacionPares {
+        val conteo = cartas.groupingBy { it }.eachCount()
+
+        // Buscar duples (2 pares diferentes)
+        val pares = conteo.entries.filter { it.value >= 2 }
+        if (pares.size >= 2) {
+            val valoresPares = pares.map { it.key }.sortedByDescending { fuerzaCartaPares(it) }
+            return Duples(valoresPares[0], valoresPares[1])
+        }
+
+        // Buscar medias (3 cartas iguales)
+        conteo.entries.find { it.value == 3 }?.let {
+            return Medias(it.key)
+        }
+
+        // Buscar par simple (2 cartas iguales)
+        conteo.entries.find { it.value == 2 }?.let {
+            return Par(it.key)
+        }
+
+        return SinPares
+    }
+
+    private fun fuerzaCartaPares(carta: Int): Int = when (carta) {
+        3, 12 -> 13  // Reyes
+        11 -> 12     // Caballos
+        10 -> 11     // Sotas
+        7 -> 10      // Sietes
+        6 -> 9       // Seis
+        5 -> 8       // Cincos
+        4 -> 7       // Cuatros
+        2 -> 6       // Dos
+        1 -> 5       // Ases
+        else -> 0
+    }
+
+    private fun calcularValorCombinacion(combinacion: CombinacionPares): Int {
+        return when (combinacion) {
+            is SinPares -> 0
+            is Par -> 100 + fuerzaCartaPares(combinacion.valorCarta)
+            is Medias -> 200 + fuerzaCartaPares(combinacion.valorCarta)
+            is Duples -> 300 + fuerzaCartaPares(combinacion.valorCarta1) * 10 +
+                    fuerzaCartaPares(combinacion.valorCarta2)
+            else -> 0
+        }
+    }
+
+    private fun calcularGanadorPares(): Jugador? {
+        val resultados = _resultadosPares.value
+        var mejorResultado: ResultadoPares? = null
+
+        // Encontrar la mejor combinación entre jugadores activos
+        for (resultado in resultados) {
+            val jugadorIndex = _jugadores.value.indexOf(resultado.jugador)
+            if (_jugadoresActivos.value[jugadorIndex]) {
+                if (mejorResultado == null || resultado.valorCombinacion > mejorResultado.valorCombinacion) {
+                    mejorResultado = resultado
+                } else if (resultado.valorCombinacion == mejorResultado.valorCombinacion) {
+                    // Empate - desempate por jugador que empezó hablando
+                    val jugadorActualIndex = _jugadores.value.indexOf(resultado.jugador)
+                    val mejorJugadorIndex = _jugadores.value.indexOf(mejorResultado.jugador)
+
+                    // Si el jugador actual es el que empezó hablando, gana
+                    if (jugadorActualIndex == jugadorInicioPartida) {
+                        mejorResultado = resultado
+                    }
+                    // Si el mejor actual no es el que empezó pero el nuevo sí, cambiamos
+                    else if (mejorJugadorIndex != jugadorInicioPartida && jugadorActualIndex == jugadorInicioPartida) {
+                        mejorResultado = resultado
+                    }
+                }
+            }
+        }
+
+        return mejorResultado?.jugador
+    }
+
+    private fun finalizarRondaParesSinGanador() {
+        _ganadorPares.value = null
+        _rondaActiva.value = false
+        _rondaParesActiva.value = false
+        _mensajes.value = "Ronda de Pares finalizada sin ganadores"
+        pasarApuestaOSiguienteRonda()
+    }
 }
+
 
 
 
