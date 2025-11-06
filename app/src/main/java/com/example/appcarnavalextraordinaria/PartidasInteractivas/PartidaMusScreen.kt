@@ -2,6 +2,7 @@ package com.example.appcarnavalextraordinaria.PartidasInteractivas
 
 
 
+
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -37,15 +38,19 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
     val rondaActiva by musGameViewModel.rondaActiva.collectAsState()
     val rondaMusActiva by musGameViewModel.rondaMusActiva.collectAsState()
     val rondaParesActiva by musGameViewModel.rondaParesActiva.collectAsState()
+    val rondaJuegoActiva by musGameViewModel.rondaJuegoActiva.collectAsState()
+    val rondaActual by musGameViewModel.rondaActual.collectAsState()
     val acciones by musGameViewModel.acciones.collectAsState()
     val apuestaActual by musGameViewModel.apuestaActual.collectAsState()
     val ganadorGrande by musGameViewModel.ganadorGrande.collectAsState()
     val ganadorChica by musGameViewModel.ganadorChica.collectAsState()
     val ganadorPares by musGameViewModel.ganadorPares.collectAsState()
+    val ganadorJuego by musGameViewModel.ganadorJuego.collectAsState()
     val resultadosPares by musGameViewModel.resultadosPares.collectAsState()
     val jugadoresConPares by musGameViewModel.jugadoresConPares.collectAsState()
     val jugadoresActivos by musGameViewModel.jugadoresActivos.collectAsState()
     val cartasDescartadas by musGameViewModel.cartasDescartadas.collectAsState()
+    val puntuacionesJuego by musGameViewModel.puntuacionesJuego.collectAsState()
 
     var cantidadSubir by remember { mutableStateOf("1") }
 
@@ -101,10 +106,63 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                     }
                 }
 
+                // Mostrar información de juego si está activa la ronda
+                item {
+                    if (rondaJuegoActiva) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color.LightGray.copy(alpha = 0.3f))
+                                .padding(8.dp)
+                        ) {
+                            Text(
+                                "Ronda de Juego - Puntuaciones:",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.Magenta
+                            )
+                            jugadores.forEachIndexed { index, jugador ->
+                                val puntuacion = puntuacionesJuego.getOrNull(index) ?: 0
+                                val tieneJuego = puntuacion >= 31
+                                val puedeJugar = if (puntuacionesJuego.any { it >= 31 }) {
+                                    tieneJuego
+                                } else {
+                                    true // Si nadie tiene juego, todos juegan al punto
+                                }
+
+                                Text(
+                                    "${jugador.nombre}: $puntuacion puntos" +
+                                            if (tieneJuego) " (JUEGO)" else " (Punto)" +
+                                                    if (!puedeJugar) " - No puede apostar" else "",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = when {
+                                        !puedeJugar -> Color.Gray
+                                        tieneJuego -> Color.Green
+                                        else -> Color.Blue
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
                 items(jugadores.size) { idx ->
-                    CartaJugador(jugadores[idx], turno == idx,
+                    val puedeJugarEnJuego = if (rondaJuegoActiva) {
+                        val puntuacion = puntuacionesJuego.getOrNull(idx) ?: 0
+                        if (puntuacionesJuego.any { it >= 31 }) {
+                            puntuacion >= 31
+                        } else {
+                            true
+                        }
+                    } else {
+                        true
+                    }
+
+                    CartaJugador(
+                        jugadores[idx],
+                        turno == idx,
                         jugadoresConPares.getOrNull(idx) == true,
-                        jugadoresActivos.getOrNull(idx) == true)
+                        jugadoresActivos.getOrNull(idx) == true && puedeJugarEnJuego
+                    )
                 }
 
                 // Mostrar ganadores
@@ -126,13 +184,39 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                                 )
                             }
                             if (ganadorPares != null) {
+                                val parejaGanadora = if (ganadorPares!!.first.nombre == "Tú" || ganadorPares!!.first.nombre == "Bot 1") {
+                                    "Tú y Bot 1"
+                                } else {
+                                    "Bot 2 y Bot 3"
+                                }
                                 Text(
-                                    "Pares: ${ganadorPares!!.first.nombre} y ${ganadorPares!!.second.nombre}",
+                                    "Pares: $parejaGanadora",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = Color.Green
                                 )
                             }
-                            if (ganadorGrande != null && ganadorChica != null && ganadorPares != null) {
+                            if (ganadorJuego != null) {
+                                val parejaGanadora = if (ganadorJuego!!.first.nombre == "Tú" || ganadorJuego!!.first.nombre == "Bot 1") {
+                                    "Tú y Bot 1"
+                                } else {
+                                    "Bot 2 y Bot 3"
+                                }
+                                val tieneJuego = puntuacionesJuego.any { it >= 31 }
+                                val esAutomatico = !rondaJuegoActiva && ganadorJuego != null && mensajes.contains("automáticamente")
+
+                                Text(
+                                    if (tieneJuego) "Juego: $parejaGanadora" + if (esAutomatico) " (Automático)" else ""
+                                    else "Punto: $parejaGanadora",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color(0xFF8A2BE2)
+                                )
+                            }
+                            // Mostrar mensaje de partida terminada solo cuando todas las rondas tienen ganador
+                            // o cuando hay ganadores automáticos en juego
+                            val partidaCompleta = ganadorGrande != null && ganadorChica != null && ganadorPares != null && ganadorJuego != null
+                            val juegoAutomatico = ganadorJuego != null && !rondaJuegoActiva && mensajes.contains("automáticamente")
+
+                            if (partidaCompleta || juegoAutomatico) {
                                 Text(
                                     "Partida terminada!",
                                     style = MaterialTheme.typography.titleLarge,
@@ -174,7 +258,16 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                                         ),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(carta.valor.toString(), fontSize = 20.sp)
+                                    Text(
+                                        when (carta.valor) {
+                                            3 -> "R"
+                                            12 -> "R" // También mostramos R para el 12 (rey)
+                                            11 -> "C"
+                                            10 -> "S"
+                                            else -> carta.valor.toString()
+                                        },
+                                        fontSize = 16.sp
+                                    )
                                 }
                             }
                         }
@@ -189,14 +282,41 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                     item {
                         Text("Turno de: ${jugadores[turno].nombre}", style = MaterialTheme.typography.titleMedium)
 
-                        // En ronda de pares, mostrar si el jugador tiene pares
-                        if (rondaParesActiva) {
-                            val tienePares = jugadoresConPares.getOrNull(turno) == true
-                            Text(
-                                if (tienePares) "Tiene pares - Puede apostar" else "No tiene pares - No puede apostar",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (tienePares) Color.Green else Color.Red
-                            )
+                        // Mostrar información específica por ronda
+                        when {
+                            rondaParesActiva -> {
+                                val tienePares = jugadoresConPares.getOrNull(turno) == true
+                                Text(
+                                    if (tienePares) "Tiene pares - Puede apostar" else "No tiene pares - No puede apostar en esta ronda",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (tienePares) Color.Green else Color.Red
+                                )
+                            }
+                            rondaJuegoActiva -> {
+                                val puntuacion = puntuacionesJuego.getOrNull(turno) ?: 0
+                                val tieneJuego = puntuacion >= 31
+                                val hayJugadoresConJuego = puntuacionesJuego.any { it >= 31 }
+                                val puedeJugar = if (hayJugadoresConJuego) tieneJuego else true
+
+                                Text(
+                                    "Puntuación: $puntuacion - " +
+                                            if (tieneJuego) "TIENE JUEGO" else "PUNTO" +
+                                                    if (!puedeJugar) " - No puede apostar" else " - Puede apostar",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = when {
+                                        !puedeJugar -> Color.Red
+                                        tieneJuego -> Color.Green
+                                        else -> Color.Blue
+                                    }
+                                )
+                            }
+                            else -> {
+                                Text(
+                                    "Ronda de ${rondaActual.replaceFirstChar { it.uppercase() }} - Todos pueden apostar",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.Blue
+                                )
+                            }
                         }
 
                         TextField(
@@ -215,14 +335,20 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                                 .padding(top = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Button(onClick = { musGameViewModel.realizarAccion(Accion.PASAR) }) { Text("Pasar") }
+                            Button(onClick = { musGameViewModel.realizarAccion(Accion.PASAR) }) {
+                                Text("Pasar")
+                            }
                             Button(
                                 onClick = {
                                     val cant = cantidadSubir.toIntOrNull() ?: 1
                                     musGameViewModel.realizarAccion(Accion.SUBIR, cant)
                                 }
-                            ) { Text("Subir") }
-                            Button(onClick = { musGameViewModel.realizarAccion(Accion.IGUALAR) }) { Text("Igualar") }
+                            ) {
+                                Text("Subir")
+                            }
+                            Button(onClick = { musGameViewModel.realizarAccion(Accion.IGUALAR) }) {
+                                Text("Igualar")
+                            }
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Row(
@@ -230,8 +356,12 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                                 .fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Button(onClick = { musGameViewModel.realizarAccion(Accion.RETIRARSE) }) { Text("Retirarse") }
-                            Button(onClick = { musGameViewModel.realizarAccion(Accion.MUS) }) { Text("Mus") }
+                            Button(onClick = { musGameViewModel.realizarAccion(Accion.RETIRARSE) }) {
+                                Text("Retirarse")
+                            }
+                            Button(onClick = { musGameViewModel.realizarAccion(Accion.MUS) }) {
+                                Text("Mus")
+                            }
                         }
                     }
                 }
@@ -251,7 +381,7 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                             onClick = { musGameViewModel.reiniciar() },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Reiniciar Ronda")
+                            Text("Nueva Partida")
                         }
                     }
                 }
@@ -298,7 +428,16 @@ fun CartaJugador(jugador: Jugador, esTurno: Boolean, tienePares: Boolean, estaAc
                             .background(Color.LightGray),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(carta.valor.toString())
+                        Text(
+                            when (carta.valor) {
+                                3 -> "R"
+                                12 -> "R" // También mostramos R para el 12 (rey)
+                                11 -> "C"
+                                10 -> "S"
+                                else -> carta.valor.toString()
+                            },
+                            fontSize = 16.sp
+                        )
                     }
                 }
             }
