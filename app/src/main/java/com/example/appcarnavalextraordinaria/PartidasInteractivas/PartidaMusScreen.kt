@@ -1,8 +1,5 @@
 package com.example.appcarnavalextraordinaria.PartidasInteractivas
 
-
-
-
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -184,6 +181,7 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                                 )
                             }
                             if (ganadorPares != null) {
+                                // Determinar la pareja ganadora completa basada en el ganador individual
                                 val parejaGanadora = if (ganadorPares!!.first.nombre == "Tú" || ganadorPares!!.first.nombre == "Bot 1") {
                                     "Tú y Bot 1"
                                 } else {
@@ -202,21 +200,13 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                                     "Bot 2 y Bot 3"
                                 }
                                 val tieneJuego = puntuacionesJuego.any { it >= 31 }
-                                val esAutomatico = !rondaJuegoActiva && ganadorJuego != null && mensajes.contains("automáticamente")
-
                                 Text(
-                                    if (tieneJuego) "Juego: $parejaGanadora" + if (esAutomatico) " (Automático)" else ""
-                                    else "Punto: $parejaGanadora",
+                                    if (tieneJuego) "Juego: $parejaGanadora" else "Punto: $parejaGanadora",
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = Color(0xFF8A2BE2)
+                                    color = Color(0xFF8A2BE2) // Violeta para juego/punto
                                 )
                             }
-                            // Mostrar mensaje de partida terminada solo cuando todas las rondas tienen ganador
-                            // o cuando hay ganadores automáticos en juego
-                            val partidaCompleta = ganadorGrande != null && ganadorChica != null && ganadorPares != null && ganadorJuego != null
-                            val juegoAutomatico = ganadorJuego != null && !rondaJuegoActiva && mensajes.contains("automáticamente")
-
-                            if (partidaCompleta || juegoAutomatico) {
+                            if (ganadorGrande != null && ganadorChica != null && ganadorPares != null && ganadorJuego != null) {
                                 Text(
                                     "Partida terminada!",
                                     style = MaterialTheme.typography.titleLarge,
@@ -284,15 +274,16 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
 
                         // Mostrar información específica por ronda
                         when {
-                            rondaParesActiva -> {
+                            rondaParesActiva && rondaActual == "pares" -> {
                                 val tienePares = jugadoresConPares.getOrNull(turno) == true
                                 Text(
-                                    if (tienePares) "Tiene pares - Puede apostar" else "No tiene pares - No puede apostar en esta ronda",
+                                    if (tienePares) "Tiene pares - Puede apostar"
+                                    else "No tiene pares - No puede apostar en esta ronda",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = if (tienePares) Color.Green else Color.Red
                                 )
                             }
-                            rondaJuegoActiva -> {
+                            rondaJuegoActiva && (rondaActual == "juego" || rondaActual == "punto") -> {
                                 val puntuacion = puntuacionesJuego.getOrNull(turno) ?: 0
                                 val tieneJuego = puntuacion >= 31
                                 val hayJugadoresConJuego = puntuacionesJuego.any { it >= 31 }
@@ -318,6 +309,7 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                                 )
                             }
                         }
+
 
                         TextField(
                             value = cantidadSubir,
@@ -509,13 +501,3 @@ private fun obtenerNombreCombinacion(combinacion: CombinacionPares): String {
         else -> "Desconocido"
     }
 }
-
-
-
-
-
-
-
-
-
-
