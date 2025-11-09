@@ -105,6 +105,12 @@ class MusGameViewModel : ViewModel() {
     private val _cartasDescartadas = MutableStateFlow(List(4) { emptyList<Int>() })
     val cartasDescartadas: StateFlow<List<List<Int>>> = _cartasDescartadas
 
+    private val _pareja1Puntos = MutableStateFlow(0)
+    val pareja1Puntos: StateFlow<Int> = _pareja1Puntos
+
+    private val _pareja2Puntos = MutableStateFlow(0)
+    val pareja2Puntos: StateFlow<Int> = _pareja2Puntos
+
     // Definir parejas (0-1 y 2-3)
     private val parejas = listOf(
         listOf(0, 1), // Tú y Bot 1
@@ -517,10 +523,12 @@ class MusGameViewModel : ViewModel() {
 
     private fun normalizarValorCarta(valor: Int): Int {
         return when (valor) {
-            12 -> 3 // Los reyes (12) se convierten en 3
+            12, 3 -> 3  // Rey = 3
+            1, 2  -> 1  // As = 1
             else -> valor
         }
     }
+
 
     private fun todosHanIgualado(): Boolean {
         val posUltimaSubida = _jugadorUltimaSubida.value ?: return false
@@ -557,21 +565,156 @@ class MusGameViewModel : ViewModel() {
         }
         pasarApuestaOSiguienteRonda()
     }
+    // 🪙 Asignar puntos a la pareja ganadora
+    private fun asignarPuntosRonda(ganador: Jugador?, puntos: Int) {
+        if (ganador == null) return
+        val parejaIndex = if (ganador.nombre == "Tú" || ganador.nombre == "Bot 1") 0 else 1
+        if (parejaIndex == 0) _pareja1Puntos.value += puntos else _pareja2Puntos.value += puntos
+    }
+
+    // 🔢 Asignar puntos directamente a una pareja (pares o juego)
+    private fun asignarPuntosPareja(pareja: Pair<Jugador, Jugador>, puntos: Int) {
+        val parejaIndex = if (pareja.first.nombre == "Tú" || pareja.first.nombre == "Bot 1") 0 else 1
+        if (parejaIndex == 0) _pareja1Puntos.value += puntos else _pareja2Puntos.value += puntos
+    }
+
+    // 🎲 Calcular puntos de pares según combinaciones (suma para la pareja ganadora)
+    private fun calcularPuntosPares(ganadores: Pair<Jugador, Jugador>): Int {
+        // Buscar los resultados de pares correspondientes a los dos jugadores de la pareja ganadora
+        val resultadosPareja = _resultadosPares.value.filter { resultado ->
+            resultado.jugador == ganadores.first || resultado.jugador == ganadores.second
+        }
+
+        var total = 0
+        resultadosPareja.forEach { resultado ->
+            total += when (resultado.combinacion) {
+                is Par -> 1
+                is Medias -> 2
+                is Duples -> 3
+                else -> 0
+            }
+        }
+        return total
+    }
+
+
+    // 🎮 Calcular puntos en juego para la pareja (suma por jugador: 3 si 31, 2 si tiene juego >=31, 0 si no)
+    private fun calcularPuntosJuego(ganadores: Pair<Jugador, Jugador>): Int {
+        val puntuaciones = _puntuacionesJuego.value
+
+        val idx1 = _jugadores.value.indexOf(ganadores.first)
+        val idx2 = _jugadores.value.indexOf(ganadores.second)
+
+        val p1 = puntuaciones.getOrNull(idx1) ?: 0
+        val p2 = puntuaciones.getOrNull(idx2) ?: 0
+
+        fun puntosPorJugador(p: Int): Int {
+            return when {
+                p == 31 -> 3
+                p >= 31 -> 2
+                else -> 0
+            }
+        }
+
+        return puntosPorJugador(p1) + puntosPorJugador(p2)
+    }
+
+
+    // 🏁 Comprobar si una pareja llega a 40 puntos
+    private fun comprobarFinDePartida() {
+        when {
+            _pareja1Puntos.value >= 40 -> {
+                _mensajes.value = "🎉 ¡Tú y Bot 1 habéis ganado la partida!"
+                _rondaActiva.value = false
+            }
+            _pareja2Puntos.value >= 40 -> {
+                _mensajes.value = "💀 ¡Bot 2 y Bot 3 han ganado la partida!"
+                _rondaActiva.value = false
+            }
+        }
+    }
+
+    // 🔄 Reiniciar todo el marcador
+    fun reiniciarPartida() {
+        _pareja1Puntos.value = 0
+        _pareja2Puntos.value = 0
+        repartirCartas()
+    }
+
 
     private fun pasarApuestaOSiguienteRonda() {
+        // Obtener la apuesta final de la ronda (embite)
+        val apuesta = _apuestaActual.value?.cantidad ?: 0
+        val esPaso = apuesta == 0
+
+        when (_rondaActual.value) {
+            "grande" -> {
+                val ganador = _ganadorGrande.value
+                if (ganador != null) {
+                    val puntos = if (esPaso) 1 else apuesta
+                    asignarPuntosRonda(ganador, puntos)
+                }
+            }
+            "chica" -> {
+                val ganador = _ganadorChica.value
+                if (ganador != null) {
+                    val puntos = if (esPaso) 1 else apuesta
+                    asignarPuntosRonda(ganador, puntos)
+                }
+            }
+            "pares" -> {
+                val ganadores = _ganadorPares.value
+                if (ganadores != null) {
+                    val extra = calcularPuntosPares(ganadores) // puntos por pares de la pareja
+                    val total = if (esPaso) {
+                        // en paso en pares: se lleva lo calculado por los pares (si no hubiera puntos, podríamos dar 1)
+                        if (extra > 0) extra else 1
+                    } else {
+                        // si hay embite: se lleva embite + puntos de pares
+                        apuesta + extra
+                    }
+                    asignarPuntosPareja(ganadores, total)
+                }
+            }
+            "juego" -> {
+                val ganadores = _ganadorJuego.value
+                if (ganadores != null) {
+                    val extra = calcularPuntosJuego(ganadores) // suma 2/3 por jugador según tenga juego/31
+                    val total = if (esPaso) {
+                        // si nadie envidó, se llevan los puntos de juego (2/3 por jugador)
+                        if (extra > 0) extra else 1
+                    } else {
+                        // si hay embite: embite + puntos de juego
+                        apuesta + extra
+                    }
+                    asignarPuntosPareja(ganadores, total)
+                }
+            }
+        }
+
+        // 🏁 Comprobar si alguien llegó a 40
+        comprobarFinDePartida()
+
+        // 🔄 Avanzar de ronda
         when (_rondaActual.value) {
             "grande" -> iniciarRondaChica()
             "chica" -> iniciarRondaPares()
             "pares" -> iniciarRondaJuego()
             "juego" -> {
-                // Solo mostramos este mensaje si no hay ganadores automáticos
                 if (_ganadorJuego.value == null) {
                     _mensajes.value = "Ronda de Juego finalizada. Partida terminada."
                 }
                 _rondaJuegoActiva.value = false
             }
         }
+
+        // Reset de apuesta para la siguiente ronda
+        _apuestaActual.value = null
+        _jugadorUltimaSubida.value = null
     }
+
+
+
 
     fun iniciarRondaMus() {
         _rondaMusActiva.value = true

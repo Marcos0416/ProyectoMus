@@ -67,6 +67,14 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.primary
                     )
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Tú & Bot 1: ${musGameViewModel.pareja1Puntos.collectAsState().value}")
+                        Text("Bot 2 & Bot 3: ${musGameViewModel.pareja2Puntos.collectAsState().value}")
+                    }
+
                 }
                 item {
                     if (!cartasRepartidas) {
