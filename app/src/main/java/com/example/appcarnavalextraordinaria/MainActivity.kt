@@ -26,10 +26,14 @@ import com.example.appcarnavalextraordinaria.Screen2.EncuestaViewModel
 
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.appcarnavalextraordinaria.Data.AppDatabase
 import com.example.appcarnavalextraordinaria.Screen1.MainScreen
 import com.example.appcarnavalextraordinaria.ui.theme.AplicacionOrdinariaInterfacesTheme
 
@@ -38,18 +42,35 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Instancia de tu base de datos
+        val db = AppDatabase.getDatabase(this)
+
         setContent {
             AplicacionOrdinariaInterfacesTheme {
                 Surface {
                     Scaffold { innerPadding ->
-                        // Simplemente pasamos innerPadding si lo necesitas
-                        AppNavigation(innerPadding = innerPadding)
+                        // Supongamos que obtienes el usuario logueado aquí
+                        val currentUserId = remember { mutableStateOf(0) }
+
+                        // Ejemplo: cargamos el primer usuario (ajústalo según tu login)
+                        LaunchedEffect(Unit) {
+                            val user = db.userDao().getUserByUsername("usuarioLogin")
+                            currentUserId.value = user?.id ?: 0
+                        }
+
+                        AppNavigation(
+                            innerPadding = innerPadding,
+                            db = db
+
+                        )
                     }
                 }
             }
         }
     }
 }
+
 
 /*
 @Preview(showBackground = true)

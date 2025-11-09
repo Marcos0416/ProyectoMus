@@ -1,5 +1,6 @@
 package com.example.appcarnavalextraordinaria.PartidasInteractivas
 
+import android.content.Context
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,16 +19,36 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.appcarnavalextraordinaria.Data.MovimientoDao
+import com.example.appcarnavalextraordinaria.Data.PartidaDao
+import com.example.appcarnavalextraordinaria.Data.ProgressDao
+import com.example.appcarnavalextraordinaria.Data.UserDao
 import com.example.appcarnavalextraordinaria.Navigation.Bars
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameViewModel = viewModel()) {
+fun PartidaMusScreen(navController: NavController,
+                     userDao: UserDao,
+                     partidaDao: PartidaDao,
+                     movimientoDao: MovimientoDao,
+                     progressDao: ProgressDao,
+                     currentUserId: Int,currentUsername: String
+) {
+    val context = LocalContext.current
+    val currentUsername = remember {
+        val sharedPreferences = context.getSharedPreferences("user_session", Context.MODE_PRIVATE)
+        sharedPreferences.getString("username", "Usuario") ?: "Usuario"
+    }
+
+    val musGameViewModel: MusGameViewModel = viewModel(
+        factory = MusGameViewModelFactory(userDao, partidaDao, movimientoDao, progressDao, currentUserId, currentUsername  )
+    )
     val jugadores by musGameViewModel.jugadores.collectAsState()
     val turno by musGameViewModel.turno.collectAsState()
     val mensajes by musGameViewModel.mensajes.collectAsState()
@@ -48,6 +69,7 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
     val jugadoresActivos by musGameViewModel.jugadoresActivos.collectAsState()
     val cartasDescartadas by musGameViewModel.cartasDescartadas.collectAsState()
     val puntuacionesJuego by musGameViewModel.puntuacionesJuego.collectAsState()
+
 
     var cantidadSubir by remember { mutableStateOf("1") }
 
@@ -378,13 +400,14 @@ fun PartidaMusScreen(navController: NavController, musGameViewModel: MusGameView
                 item {
                     if (!rondaActiva && cartasRepartidas && !rondaMusActiva) {
                         Button(
-                            onClick = { musGameViewModel.reiniciar() },
+                            onClick = { musGameViewModel.nuevaMano() }, // <-- aquí
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text("Nueva Partida")
                         }
                     }
                 }
+
             }
         }
     }

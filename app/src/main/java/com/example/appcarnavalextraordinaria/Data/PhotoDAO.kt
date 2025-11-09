@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ProgressDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(progress: ProgressEntity)
+    suspend fun insertProgress(progress: ProgressEntity)
 
     @Query("SELECT * FROM progress_table WHERE username = :username")
     suspend fun getProgress(username: String): ProgressEntity?

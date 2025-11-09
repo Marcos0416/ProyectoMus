@@ -1,7 +1,13 @@
 package com.example.appcarnavalextraordinaria.Navigation
 
+import android.content.Context
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -20,6 +26,7 @@ import com.example.appcarnavalextraordinaria.Screen2.MazoCartasScreen
 import com.example.appcarnavalextraordinaria.Screen2.PuntuacionScreen
 import com.example.appcarnavalextraordinaria.Screen2.ReglasBasicasScreen
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import com.example.appcarnavalextraordinaria.Login.LoginScreen
 import com.example.appcarnavalextraordinaria.Login.RegistroScreen
 
@@ -33,37 +40,50 @@ import com.example.appcarnavalextraordinaria.Screen3.SenalesScreen
 
 // Función Composable que configura la navegación de la aplicación
 @Composable
-fun AppNavigation(innerPadding: PaddingValues) {
+fun AppNavigation(
+    innerPadding: PaddingValues,
+    db: AppDatabase
+) { // Elimina el parámetro loggedInUserId ya que lo obtendremos del UserViewModel
     val navController = rememberNavController()
     val context = LocalContext.current
 
-    // Creas base de datos y userViewModel solo una vez, para compartir entre pantallas
-    val db = AppDatabase.getDatabase(context)
+    // UserViewModel basado en el dao de la base de datos pasada como parámetro
     val userDao = db.userDao()
-    val factory = UserViewModel.UserViewModelFactory(userDao)
-    val userViewModel: UserViewModel = viewModel(factory = factory)
+    val userViewModel: UserViewModel = viewModel(factory = UserViewModel.UserViewModelFactory(userDao))
 
-    NavHost(navController = navController, startDestination = "main") {
+    // Obtener el usuario logueado desde el UserViewModel
+    val loggedInUser by userViewModel.loggedInUser.observeAsState(null)
+    val currentUserId = loggedInUser?.id ?: userViewModel.getUserId(context)
+    val currentUsername = loggedInUser?.username ?: userViewModel.getSession(context) ?: "Usuario"
 
+
+
+    NavHost(
+        navController = navController,
+        startDestination = "main",
+        modifier = Modifier.padding(innerPadding)
+    ) {
         composable("main") {
             MainScreen(navController, userViewModel, context)
         }
-
-
-
-
-
-
         composable("Tutoriales") { TutorialesScreen(navController) }
         composable("Reglas") { ReglasBasicasScreen(navController) }
         composable("Mazo") { MazoCartasScreen(navController) }
-
         composable("Estrategias") { EstrategiasScreen(navController) }
         composable("Funcionamiento") { FlujoPartidaMusScreen(navController) }
         composable("Puntuacion") { PuntuacionScreen(navController) }
         composable("Senales") { SenalesScreen(navController) }
-        composable("Partida") { PartidaMusScreen(navController) }
-
+        composable("Partida") {
+            PartidaMusScreen(
+                navController = navController,
+                userDao = db.userDao(),
+                partidaDao = db.partidaDao(),
+                movimientoDao = db.movimientoDao(),
+                progressDao = db.progressDao(),
+                currentUserId = currentUserId,
+                currentUsername = currentUsername
+            )
+        }
         composable("Registro") {
             RegistroScreen(
                 navController = navController,
@@ -80,9 +100,7 @@ fun AppNavigation(innerPadding: PaddingValues) {
                 onLoginSuccess = { navController.popBackStack() }
             )
         }
-
-
-
     }
 }
+
 

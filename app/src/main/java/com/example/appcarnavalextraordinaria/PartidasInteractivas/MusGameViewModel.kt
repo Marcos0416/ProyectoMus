@@ -1,13 +1,20 @@
 package com.example.appcarnavalextraordinaria.PartidasInteractivas
 
-
-
-
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
+import androidx.lifecycle.viewModelScope
+import com.example.appcarnavalextraordinaria.Data.MovimientoDao
+import com.example.appcarnavalextraordinaria.Data.MovimientoEntity
+import com.example.appcarnavalextraordinaria.Data.PartidaDao
+import com.example.appcarnavalextraordinaria.Data.PartidaEntity
+import com.example.appcarnavalextraordinaria.Data.ProgressDao
+import com.example.appcarnavalextraordinaria.Data.ProgressEntity
+import com.example.appcarnavalextraordinaria.Data.UserDao
+import kotlinx.coroutines.launch
 
 data class Carta(val id: Int, val valor: Int)
 data class Jugador(val nombre: String, val esHumano: Boolean, val cartas: List<Carta> = emptyList())
@@ -27,12 +34,21 @@ data class ResultadoPares(
     val valorCombinacion: Int = 0
 )
 
-class MusGameViewModel : ViewModel() {
+class MusGameViewModel(
+    private val userDao: UserDao,
+    private val partidaDao: PartidaDao,
+    private val movimientoDao: MovimientoDao,
+    private val progressDao: ProgressDao,
+    private val currentUserId: Int,
+    private val currentUsername: String
+) : ViewModel() {
     private var siguienteIdCarta = 0
+    private var jugadorInicioPartida = 0
+    private var partidaIdActual: Int? = null
 
     private val _jugadores = MutableStateFlow(
         listOf(
-            Jugador("Tú", true),
+            Jugador(currentUsername, true),
             Jugador("Bot 1", false),
             Jugador("Bot 2", false),
             Jugador("Bot 3", false)
@@ -100,8 +116,6 @@ class MusGameViewModel : ViewModel() {
     private val _puntuacionesJuego = MutableStateFlow<List<Int>>(emptyList())
     val puntuacionesJuego: StateFlow<List<Int>> = _puntuacionesJuego
 
-    private var jugadorInicioPartida = 0
-
     private val _cartasDescartadas = MutableStateFlow(List(4) { emptyList<Int>() })
     val cartasDescartadas: StateFlow<List<List<Int>>> = _cartasDescartadas
 
@@ -117,7 +131,70 @@ class MusGameViewModel : ViewModel() {
         listOf(2, 3)  // Bot 2 y Bot 3
     )
 
+    // ============================= FUNCIONES DE BASE DE DATOS =============================
+
+    private fun iniciarPartidaDB() {
+        viewModelScope.launch {
+            val partida = PartidaEntity(
+                createdBy = currentUserId,
+                resultado = "",
+                fecha = System.currentTimeMillis()
+            )
+            partidaIdActual = partidaDao.insertPartida(partida).toInt()
+            Log.d("DEBUG", "Creando partida con userId=${currentUserId}")
+
+        }
+    }
+
+    private fun registrarMovimiento(accion: Accion, cantidad: Int? = null) {
+        viewModelScope.launch {
+            partidaIdActual?.let {
+                // Obtener el userId del jugador actual (solo para jugador humano)
+                val userId = if (_turno.value == 0) currentUserId else -1 // -1 para bots
+
+                val movimiento = MovimientoEntity(
+                    partidaId = it,
+                    userId = userId,
+                    ronda = _rondaActual.value,
+                    accion = accion.name,
+                    cantidad = cantidad
+                )
+                movimientoDao.insertMovimiento(movimiento)
+            }
+        }
+    }
+
+    private fun guardarResultadoPartida(resultado: String) {
+        viewModelScope.launch {
+            partidaIdActual?.let { id ->
+                // Obtener la partida actual, actualizar el resultado y guardarla
+                val partida = partidaDao.getPartidaById(id)
+                partida?.let {
+                    val partidaActualizada = it.copy(resultado = resultado)
+                    partidaDao.updatePartida(partidaActualizada)
+                }
+            }
+        }
+    }
+
+    private fun actualizarProgresoJugador() {
+        viewModelScope.launch {
+            val puntos = _pareja1Puntos.value
+            val progress = ProgressEntity(
+                username = currentUsername,
+                tutorialStep = 1, // O el paso actual del tutorial
+                score = puntos,
+                lastAccess = System.currentTimeMillis()
+            )
+            progressDao.insertProgress(progress)
+        }
+    }
+
+    // ============================= FUNCIONES PRINCIPALES DEL JUEGO =============================
+
     fun repartirCartas() {
+        if (partidaIdActual == null) iniciarPartidaDB()
+
         val cartasValidas = (1..12).filterNot { it == 8 || it == 9 }
         siguienteIdCarta = 0
         _jugadores.value = _jugadores.value.map {
@@ -132,10 +209,8 @@ class MusGameViewModel : ViewModel() {
         _rondaParesActiva.value = false
         _rondaJuegoActiva.value = false
 
-        // Rotar el jugador que inicia la partida
         jugadorInicioPartida = (jugadorInicioPartida + 1) % 4
         _turno.value = jugadorInicioPartida
-
         _mensajes.value = "Cartas repartidas. Comienza ${_jugadores.value[jugadorInicioPartida].nombre}."
         _acciones.value = emptyList()
         _apuestaActual.value = null
@@ -150,6 +225,21 @@ class MusGameViewModel : ViewModel() {
         _puntuacionesJuego.value = emptyList()
         _cartasDescartadas.value = List(4) { emptyList() }
         _musPedidos.value = MutableList(4) { false }
+
+        // NO resetear _pareja1Puntos y _pareja2Puntos aquí
+    }
+
+    // Añade esta función para reiniciar completamente (solo cuando un equipo llega a 40)
+    fun reiniciarPartidaCompleta() {
+        _pareja1Puntos.value = 0
+        _pareja2Puntos.value = 0
+        partidaIdActual = null // Para crear nueva partida en la BD
+        repartirCartas()
+    }
+
+    // Esta función solo para nueva mano, no reinicia marcador
+    fun nuevaMano() {
+        repartirCartas()
     }
 
     fun toggleDescartarCarta(jugadorIndex: Int, cartaId: Int) {
@@ -281,21 +371,7 @@ class MusGameViewModel : ViewModel() {
 
         _mensajes.value = "Ambas parejas tienen pares. Comienza ${_jugadores.value[_turno.value].nombre}"
     }
-    // Añade esta función para finalizar automáticamente cuando una pareja gana por tener juego
-    private fun finalizarRondaJuegoConGanadorAutomatico() {
-        _rondaActiva.value = false
-        _rondaJuegoActiva.value = false
-        _mensajes.value = if (_ganadorJuego.value != null) {
-            "Ganadores automáticos de Juego: ${_ganadorJuego.value!!.first.nombre} y ${_ganadorJuego.value!!.second.nombre}"
-        } else {
-            "Ronda de Juego finalizada sin ganadores"
-        }
-        // En juego, si hay ganadores automáticos, la partida termina inmediatamente
-        _mensajes.value = "Partida terminada. ${_mensajes.value}"
-    }
 
-
-    // En la función iniciarRondaJuego, REEMPLAZA el código completo por:
     fun iniciarRondaJuego() {
         _rondaActual.value = "juego"
         _rondaActiva.value = true
@@ -400,6 +476,7 @@ class MusGameViewModel : ViewModel() {
 
         val jugadorActual = _jugadores.value[_turno.value]
         val log = _acciones.value.toMutableList()
+
         when (accion) {
             Accion.ENVIDAR, Accion.SUBIR -> {
                 val incremento = cantidad ?: 1
@@ -408,22 +485,27 @@ class MusGameViewModel : ViewModel() {
                 _apuestaActual.value = Apuesta(nuevaCantidad, jugadorActual)
                 _jugadorUltimaSubida.value = _turno.value
                 log.add("${jugadorActual.nombre} sube la apuesta a $nuevaCantidad piedras")
+                registrarMovimiento(accion, incremento)
             }
             Accion.IGUALAR -> {
                 log.add("${jugadorActual.nombre} iguala la apuesta de ${_apuestaActual.value?.cantidad ?: 0} piedras")
+                registrarMovimiento(accion, _apuestaActual.value?.cantidad)
                 if (todosHanIgualado()) finalizarApuesta()
             }
             Accion.PASAR -> {
                 log.add("${jugadorActual.nombre} pasa")
+                registrarMovimiento(accion)
                 comprobarUnicoActivo()
             }
             Accion.RETIRARSE -> {
                 log.add("${jugadorActual.nombre} se retira de la apuesta")
+                registrarMovimiento(accion)
                 _jugadoresActivos.value[_turno.value] = false
                 comprobarUnicoActivo()
             }
             Accion.MUS -> {
                 log.add("${jugadorActual.nombre} pide Mus")
+                registrarMovimiento(accion)
                 val musPedidosMutable = _musPedidos.value.toMutableList()
                 musPedidosMutable[_turno.value] = true
                 _musPedidos.value = musPedidosMutable
@@ -521,60 +603,24 @@ class MusGameViewModel : ViewModel() {
         }
     }
 
-    private fun normalizarValorCarta(valor: Int): Int {
-        return when (valor) {
-            12, 3 -> 3  // Rey = 3
-            1, 2  -> 1  // As = 1
-            else -> valor
-        }
-    }
-
-
     private fun todosHanIgualado(): Boolean {
         val posUltimaSubida = _jugadorUltimaSubida.value ?: return false
         return _turno.value == posUltimaSubida
     }
 
-    private fun finalizarApuesta() {
-        when (_rondaActual.value) {
-            "grande" -> _ganadorGrande.value = calcularGanadorGrande()
-            "chica" -> _ganadorChica.value = calcularGanadorChica()
-            "pares" -> _ganadorPares.value = calcularGanadorPares()
-            "juego" -> _ganadorJuego.value = calcularGanadorJuego()
-        }
-        _rondaActiva.value = false
-        _mensajes.value = when (_rondaActual.value) {
-            "grande" -> "Apuesta finalizada. Ganador de Grande: ${_ganadorGrande.value?.nombre ?: "Nadie"}"
-            "chica" -> "Apuesta finalizada. Ganador de Chica: ${_ganadorChica.value?.nombre ?: "Nadie"}"
-            "pares" -> {
-                val ganadores = _ganadorPares.value
-                "Apuesta finalizada. Ganadores de Pares: ${ganadores?.first?.nombre ?: "Nadie"} y ${ganadores?.second?.nombre ?: "Nadie"}"
-            }
-            "juego" -> {
-                val ganadores = _ganadorJuego.value
-                val puntuaciones = _puntuacionesJuego.value
-                val tieneJuego = puntuaciones.any { it >= 31 }
 
-                if (tieneJuego) {
-                    "Apuesta finalizada. Ganadores de Juego: ${ganadores?.first?.nombre ?: "Nadie"} y ${ganadores?.second?.nombre ?: "Nadie"}"
-                } else {
-                    "Apuesta finalizada. Ganadores del Punto: ${ganadores?.first?.nombre ?: "Nadie"} y ${ganadores?.second?.nombre ?: "Nadie"}"
-                }
-            }
-            else -> ""
-        }
-        pasarApuestaOSiguienteRonda()
-    }
+
     // 🪙 Asignar puntos a la pareja ganadora
     private fun asignarPuntosRonda(ganador: Jugador?, puntos: Int) {
         if (ganador == null) return
-        val parejaIndex = if (ganador.nombre == "Tú" || ganador.nombre == "Bot 1") 0 else 1
+        // Usar el nombre real del usuario para la comparación
+        val parejaIndex = if (ganador.nombre == currentUsername || ganador.nombre == "Bot 1") 0 else 1
         if (parejaIndex == 0) _pareja1Puntos.value += puntos else _pareja2Puntos.value += puntos
     }
 
-    // 🔢 Asignar puntos directamente a una pareja (pares o juego)
     private fun asignarPuntosPareja(pareja: Pair<Jugador, Jugador>, puntos: Int) {
-        val parejaIndex = if (pareja.first.nombre == "Tú" || pareja.first.nombre == "Bot 1") 0 else 1
+        // Usar el nombre real del usuario para la comparación
+        val parejaIndex = if (pareja.first.nombre == currentUsername || pareja.second.nombre == currentUsername) 0 else 1
         if (parejaIndex == 0) _pareja1Puntos.value += puntos else _pareja2Puntos.value += puntos
     }
 
@@ -597,7 +643,6 @@ class MusGameViewModel : ViewModel() {
         return total
     }
 
-
     // 🎮 Calcular puntos en juego para la pareja (suma por jugador: 3 si 31, 2 si tiene juego >=31, 0 si no)
     private fun calcularPuntosJuego(ganadores: Pair<Jugador, Jugador>): Int {
         val puntuaciones = _puntuacionesJuego.value
@@ -619,28 +664,42 @@ class MusGameViewModel : ViewModel() {
         return puntosPorJugador(p1) + puntosPorJugador(p2)
     }
 
-
     // 🏁 Comprobar si una pareja llega a 40 puntos
     private fun comprobarFinDePartida() {
         when {
             _pareja1Puntos.value >= 40 -> {
-                _mensajes.value = "🎉 ¡Tú y Bot 1 habéis ganado la partida!"
+                _mensajes.value = "🎉 ¡${_jugadores.value[0].nombre} y ${_jugadores.value[1].nombre} habéis ganado la partida!"
                 _rondaActiva.value = false
+
+                // Determinar qué pareja ganó para guardar correctamente
+                val resultado = if (_pareja1Puntos.value >= 40) {
+                    "Ganadores: Pareja 1 (${_pareja1Puntos.value} - ${_pareja2Puntos.value})"
+                } else {
+                    "Ganadores: Pareja 2 (${_pareja1Puntos.value} - ${_pareja2Puntos.value})"
+                }
+
+                guardarResultadoPartida(resultado)
+                actualizarProgresoJugador()
+
+                // Opcional: reiniciar automáticamente después de un tiempo
+                Handler(Looper.getMainLooper()).postDelayed({
+                    reiniciarPartidaCompleta()
+                }, 5000)
             }
             _pareja2Puntos.value >= 40 -> {
-                _mensajes.value = "💀 ¡Bot 2 y Bot 3 han ganado la partida!"
+                _mensajes.value = "💀 ¡${_jugadores.value[2].nombre} y ${_jugadores.value[3].nombre} han ganado la partida!"
                 _rondaActiva.value = false
+
+                val resultado = "Ganadores: Pareja 2 (${_pareja1Puntos.value} - ${_pareja2Puntos.value})"
+                guardarResultadoPartida(resultado)
+                actualizarProgresoJugador()
+
+                Handler(Looper.getMainLooper()).postDelayed({
+                    reiniciarPartidaCompleta()
+                }, 5000)
             }
         }
     }
-
-    // 🔄 Reiniciar todo el marcador
-    fun reiniciarPartida() {
-        _pareja1Puntos.value = 0
-        _pareja2Puntos.value = 0
-        repartirCartas()
-    }
-
 
     private fun pasarApuestaOSiguienteRonda() {
         // Obtener la apuesta final de la ronda (embite)
@@ -703,6 +762,8 @@ class MusGameViewModel : ViewModel() {
             "juego" -> {
                 if (_ganadorJuego.value == null) {
                     _mensajes.value = "Ronda de Juego finalizada. Partida terminada."
+                    guardarResultadoPartida("Partida completada (${_pareja1Puntos.value} - ${_pareja2Puntos.value})")
+                    actualizarProgresoJugador()
                 }
                 _rondaJuegoActiva.value = false
             }
@@ -713,9 +774,6 @@ class MusGameViewModel : ViewModel() {
         _jugadorUltimaSubida.value = null
     }
 
-
-
-
     fun iniciarRondaMus() {
         _rondaMusActiva.value = true
         _rondaActiva.value = false
@@ -724,7 +782,20 @@ class MusGameViewModel : ViewModel() {
         _cartasDescartadas.value = List(4) { emptyList() }
     }
 
-    fun reiniciar() { repartirCartas() }
+    fun reiniciar() {
+
+        repartirCartas()
+    }
+
+    // ============================= FUNCIONES AUXILIARES DEL JUEGO =============================
+
+    private fun normalizarValorCarta(valor: Int): Int {
+        return when (valor) {
+            12, 3 -> 3  // Rey = 3
+            1, 2  -> 1  // As = 1
+            else -> valor
+        }
+    }
 
     // ----------- GRANDE -----------
     private fun fuerzaCarta(carta: Int): Int = when (carta) {
@@ -749,20 +820,6 @@ class MusGameViewModel : ViewModel() {
         }
         return 0
     }
-    private fun calcularGanadorGrande(): Jugador? {
-        var ganador: Jugador? = null
-        var mejorMano: List<Int>? = null
-        for (i in _jugadores.value.indices) {
-            if (_jugadoresActivos.value[i]) {
-                val cartasValores = _jugadores.value[i].cartas.map { it.valor }
-                if (ganador == null || compararCartasGrande(cartasValores, mejorMano ?: emptyList()) > 0) {
-                    ganador = _jugadores.value[i]
-                    mejorMano = cartasValores
-                }
-            }
-        }
-        return ganador
-    }
 
     // ----------- CHICA -----------
     private fun fuerzaCartaChica(carta: Int): Int = when (carta) {
@@ -785,20 +842,6 @@ class MusGameViewModel : ViewModel() {
             if (diff != 0) return -diff
         }
         return 0
-    }
-    private fun calcularGanadorChica(): Jugador? {
-        var ganador: Jugador? = null
-        var mejorMano: List<Int>? = null
-        for (i in _jugadores.value.indices) {
-            if (_jugadoresActivos.value[i]) {
-                val cartasValores = _jugadores.value[i].cartas.map { it.valor }
-                if (ganador == null || compararCartasChica(cartasValores, mejorMano ?: emptyList()) > 0) {
-                    ganador = _jugadores.value[i]
-                    mejorMano = cartasValores
-                }
-            }
-        }
-        return ganador
     }
 
     // ----------- PARES -----------
@@ -1008,8 +1051,76 @@ class MusGameViewModel : ViewModel() {
         }
         pasarApuestaOSiguienteRonda()
     }
+
+    private fun finalizarRondaJuegoConGanadorAutomatico() {
+        _rondaActiva.value = false
+        _rondaJuegoActiva.value = false
+        _mensajes.value = if (_ganadorJuego.value != null) {
+            "Ganadores automáticos de Juego: ${_ganadorJuego.value!!.first.nombre} y ${_ganadorJuego.value!!.second.nombre}"
+        } else {
+            "Ronda de Juego finalizada sin ganadores"
+        }
+        // En juego, si hay ganadores automáticos, la partida termina inmediatamente
+        _mensajes.value = "Partida terminada. ${_mensajes.value}"
+        guardarResultadoPartida("Ganadores automáticos de Juego")
+        actualizarProgresoJugador()
+    }
+    private fun calcularGanadorChica(): Jugador? {
+        var ganador: Jugador? = null
+        var mejorMano: List<Int>? = null
+        for (i in _jugadores.value.indices) {
+            if (_jugadoresActivos.value[i]) {
+                val cartasValores = _jugadores.value[i].cartas.map { it.valor }
+                if (ganador == null || compararCartasChica(cartasValores, mejorMano ?: emptyList()) > 0) {
+                    ganador = _jugadores.value[i]
+                    mejorMano = cartasValores
+                }
+            }
+        }
+        return ganador
+    }
+    private fun calcularGanadorGrande(): Jugador? {
+        var ganador: Jugador? = null
+        var mejorMano: List<Int>? = null
+        for (i in _jugadores.value.indices) {
+            if (_jugadoresActivos.value[i]) {
+                val cartasValores = _jugadores.value[i].cartas.map { it.valor }
+                if (ganador == null || compararCartasGrande(cartasValores, mejorMano ?: emptyList()) > 0) {
+                    ganador = _jugadores.value[i]
+                    mejorMano = cartasValores
+                }
+            }
+        }
+        return ganador
+    }
+    private fun finalizarApuesta() {
+        when (_rondaActual.value) {
+            "grande" -> _ganadorGrande.value = calcularGanadorGrande()
+            "chica" -> _ganadorChica.value = calcularGanadorChica()
+            "pares" -> _ganadorPares.value = calcularGanadorPares()
+            "juego" -> _ganadorJuego.value = calcularGanadorJuego()
+        }
+        _rondaActiva.value = false
+        _mensajes.value = when (_rondaActual.value) {
+            "grande" -> "Apuesta finalizada. Ganador de Grande: ${_ganadorGrande.value?.nombre ?: "Nadie"}"
+            "chica" -> "Apuesta finalizada. Ganador de Chica: ${_ganadorChica.value?.nombre ?: "Nadie"}"
+            "pares" -> {
+                val ganadores = _ganadorPares.value
+                "Apuesta finalizada. Ganadores de Pares: ${ganadores?.first?.nombre ?: "Nadie"} y ${ganadores?.second?.nombre ?: "Nadie"}"
+            }
+            "juego" -> {
+                val ganadores = _ganadorJuego.value
+                val puntuaciones = _puntuacionesJuego.value
+                val tieneJuego = puntuaciones.any { it >= 31 }
+
+                if (tieneJuego) {
+                    "Apuesta finalizada. Ganadores de Juego: ${ganadores?.first?.nombre ?: "Nadie"} y ${ganadores?.second?.nombre ?: "Nadie"}"
+                } else {
+                    "Apuesta finalizada. Ganadores del Punto: ${ganadores?.first?.nombre ?: "Nadie"} y ${ganadores?.second?.nombre ?: "Nadie"}"
+                }
+            }
+            else -> ""
+        }
+        pasarApuestaOSiguienteRonda()
+    }
 }
-
-
-
-

@@ -14,31 +14,48 @@ class UserViewModel(private val userDao: UserDao) : ViewModel() {
         viewModelScope.launch {
             val user = userDao.authenticateUser(username, password)
             if (user != null) {
-                saveSession(context, user.username)
+                android.util.Log.d("DEBUG", "Usuario autenticado -> id=${user.id}, username=${user.username}")
+
+                saveSession(context, user)   // <--- guarda ID + username
                 _loggedInUser.postValue(user)
             } else {
+                android.util.Log.d("DEBUG", "Login fallido para usuario=$username")
                 _loggedInUser.postValue(null)
             }
         }
     }
 
 
+    fun getUserId(context: Context): Int {
+        val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val id = prefs.getInt("user_id", 0)
+        android.util.Log.d("DEBUG", "Leyendo user_id desde prefs -> $id")
+        return id
+    }
+
+
+
     suspend fun registerUser(username: String, password: String, context: Context): Boolean {
         val existingUser = userDao.getUserByUsername(username)
         if (existingUser == null) {
             val newUser = UserEntity(username = username, password = password, email = "")
-            userDao.insertUser(newUser)
-            saveSession(context, username)
-            _loggedInUser.postValue(newUser)
+            val newId = userDao.insertUser(newUser).toInt()   // guarda el ID autogenerado
+            saveSession(context, newUser.copy(id = newId))   // <--- guarda también el ID
+            _loggedInUser.postValue(newUser.copy(id = newId))
             return true
         }
         return false
     }
 
-    fun saveSession(context: Context, username: String) {
+    fun saveSession(context: Context, user: UserEntity) {
         val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        prefs.edit().putString("session_user", username).apply()
+        prefs.edit()
+            .putString("session_user", user.username)
+            .putInt("user_id", user.id)
+            .apply()
+        android.util.Log.d("DEBUG", "Sesión guardada -> username=${user.username}, id=${user.id}")
     }
+
 
     fun getSession(context: Context): String? {
         val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
