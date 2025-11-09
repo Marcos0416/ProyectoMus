@@ -12,7 +12,7 @@ import androidx.room.RoomDatabase
         MovimientoEntity::class,
         ProgressEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

@@ -14,6 +14,7 @@ import com.example.appcarnavalextraordinaria.Data.PartidaEntity
 import com.example.appcarnavalextraordinaria.Data.ProgressDao
 import com.example.appcarnavalextraordinaria.Data.ProgressEntity
 import com.example.appcarnavalextraordinaria.Data.UserDao
+import com.example.appcarnavalextraordinaria.Login.UserViewModel
 import kotlinx.coroutines.launch
 
 data class Carta(val id: Int, val valor: Int)
@@ -179,16 +180,22 @@ class MusGameViewModel(
 
     private fun actualizarProgresoJugador() {
         viewModelScope.launch {
-            val puntos = _pareja1Puntos.value
+            val puntos = _pareja1Puntos.value ?: 0
             val progress = ProgressEntity(
-                username = currentUsername,
-                tutorialStep = 1, // O el paso actual del tutorial
+                userId = currentUserId,     // <--- el ID del usuario que está jugando
+                tutorialStep = 1,           // o el paso actual del tutorial
                 score = puntos,
                 lastAccess = System.currentTimeMillis()
             )
             progressDao.insertProgress(progress)
         }
     }
+
+
+
+
+
+
 
     // ============================= FUNCIONES PRINCIPALES DEL JUEGO =============================
 
@@ -680,6 +687,8 @@ class MusGameViewModel(
 
                 guardarResultadoPartida(resultado)
                 actualizarProgresoJugador()
+
+
 
                 // Opcional: reiniciar automáticamente después de un tiempo
                 Handler(Looper.getMainLooper()).postDelayed({

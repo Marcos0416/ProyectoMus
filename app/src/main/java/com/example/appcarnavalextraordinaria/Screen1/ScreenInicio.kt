@@ -54,11 +54,14 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -71,6 +74,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.appcarnavalextraordinaria.Data.ProgressDao
+import com.example.appcarnavalextraordinaria.Data.ProgressEntity
 import com.example.appcarnavalextraordinaria.Login.UserViewModel
 import com.example.appcarnavalextraordinaria.Navigation.Bars
 import com.example.appcarnavalextraordinaria.R
@@ -80,25 +85,37 @@ import com.example.appcarnavalextraordinaria.ui.theme.AplicacionOrdinariaInterfa
 
 
 @OptIn(ExperimentalMaterial3Api::class)
-
 @Composable
-fun MainScreen(navController: NavController,
-               userViewModel: UserViewModel,
-               context: Context
+fun MainScreen(
+    navController: NavController,
+    userViewModel: UserViewModel,
+    progressDao: ProgressDao,
+    currentUserId: Int,         // <--- agregar esto
+    currentUsername: String,    // <--- agregar esto
+    context: Context
 ) {
-
     val loggedUsername = userViewModel.getSession(context)
+    val progressList = remember { mutableStateListOf<ProgressEntity>() }
+
+    // Cargar progresos del usuario
+    LaunchedEffect(currentUserId) {
+        progressDao.getProgressByUser(currentUserId).collect { list ->
+            progressList.clear()
+            progressList.addAll(list)
+        }
+    }
+
     Bars(navController = navController) { modifier ->
         Surface(
             modifier = modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
             LazyColumn(
-                modifier = Modifier,
+                modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 item {
-
+                    // --- Encabezado y avatar ---
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -107,7 +124,6 @@ fun MainScreen(navController: NavController,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         if (!loggedUsername.isNullOrEmpty()) {
-                            // Círculo-avatar con la inicial
                             Box(
                                 modifier = Modifier
                                     .size(36.dp)
@@ -149,9 +165,10 @@ fun MainScreen(navController: NavController,
                             )
                         }
                     }
+
+                    // --- Imagen y descripción ---
                     Image(
-                        painter = painterResource(id = R.drawable.imagenmustfg
-                        ),
+                        painter = painterResource(id = R.drawable.imagenmustfg),
                         contentDescription = "Logo Mus",
                         modifier = Modifier
                             .size(200.dp)
@@ -171,12 +188,15 @@ fun MainScreen(navController: NavController,
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                // --- Menú principal ---
+                item {
                     CardMenuItem(
                         title = "Tutoriales",
                         description = "Explicaciones desde lo más básico hasta avanzado.",
                         imageRes = R.drawable.tutorial,
                         onClick = { navController.navigate("Tutoriales") },
-
                     )
                     CardMenuItem(
                         title = "Diccionario de Señales",
@@ -196,8 +216,51 @@ fun MainScreen(navController: NavController,
                         imageRes = R.drawable.examenmus,
                         onClick = { navController.navigate("test") }
                     )
+                }
 
+                // --- Progreso del usuario ---
+                if (progressList.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "Tu progreso",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(start = 16.dp, top = 16.dp)
+                        )
+                    }
 
+                    items(progressList.size) { index ->
+                        val item = progressList[index]
+                        val fechaLegible = java.text.SimpleDateFormat(
+                            "dd/MM/yyyy HH:mm",
+                            java.util.Locale.getDefault()
+                        ).format(java.util.Date(item.lastAccess))
+
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+
+                                    Text("Puntos: ${item.score}")
+                                    Text("Último acceso: $fechaLegible")
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    item {
+                        Text(
+                            text = "Aún no tienes progreso registrado.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
                 }
             }
         }
@@ -247,6 +310,8 @@ fun CardMenuItem(
         }
     }
 }
+
+
 
 
 

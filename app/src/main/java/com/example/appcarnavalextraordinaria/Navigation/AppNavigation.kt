@@ -64,8 +64,18 @@ fun AppNavigation(
         modifier = Modifier.padding(innerPadding)
     ) {
         composable("main") {
-            MainScreen(navController, userViewModel, context)
+            MainScreen(
+                navController = navController,
+                userViewModel = userViewModel,
+                progressDao = db.progressDao(),
+                currentUserId = currentUserId,       // el ID que obtuviste arriba
+                currentUsername = currentUsername,   // el username que obtuviste arriba
+                context = context
+            )
         }
+
+
+
         composable("Tutoriales") { TutorialesScreen(navController) }
         composable("Reglas") { ReglasBasicasScreen(navController) }
         composable("Mazo") { MazoCartasScreen(navController) }
