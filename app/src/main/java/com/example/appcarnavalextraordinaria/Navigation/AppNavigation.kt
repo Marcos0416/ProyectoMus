@@ -27,6 +27,8 @@ import com.example.appcarnavalextraordinaria.Screen2.PuntuacionScreen
 import com.example.appcarnavalextraordinaria.Screen2.ReglasBasicasScreen
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.appcarnavalextraordinaria.Login.LoginScreen
 import com.example.appcarnavalextraordinaria.Login.RegistroScreen
 
@@ -36,27 +38,29 @@ import com.example.appcarnavalextraordinaria.Screen2.TutorialesScreen
 
 
 import com.example.appcarnavalextraordinaria.Screen3.SenalesScreen
+import com.example.appcarnavalextraordinaria.Test.TestDetailScreen
+import com.example.appcarnavalextraordinaria.Test.TestResultScreen
+import com.example.appcarnavalextraordinaria.Test.TestsListScreen
 
 
-// Función Composable que configura la navegación de la aplicación
 @Composable
 fun AppNavigation(
     innerPadding: PaddingValues,
     db: AppDatabase
-) { // Elimina el parámetro loggedInUserId ya que lo obtendremos del UserViewModel
+) {
     val navController = rememberNavController()
     val context = LocalContext.current
 
-    // UserViewModel basado en el dao de la base de datos pasada como parámetro
+    // UserViewModel
     val userDao = db.userDao()
     val userViewModel: UserViewModel = viewModel(factory = UserViewModel.UserViewModelFactory(userDao))
 
-    // Obtener el usuario logueado desde el UserViewModel
+    // Obtener el usuario logueado
     val loggedInUser by userViewModel.loggedInUser.observeAsState(null)
     val currentUserId = loggedInUser?.id ?: userViewModel.getUserId(context)
     val currentUsername = loggedInUser?.username ?: userViewModel.getSession(context) ?: "Usuario"
 
-
+    val testDao = db.testDao()
 
     NavHost(
         navController = navController,
@@ -68,13 +72,11 @@ fun AppNavigation(
                 navController = navController,
                 userViewModel = userViewModel,
                 progressDao = db.progressDao(),
-                currentUserId = currentUserId,       // el ID que obtuviste arriba
-                currentUsername = currentUsername,   // el username que obtuviste arriba
+                currentUserId = currentUserId,
+                currentUsername = currentUsername,
                 context = context
             )
         }
-
-
 
         composable("Tutoriales") { TutorialesScreen(navController) }
         composable("Reglas") { ReglasBasicasScreen(navController) }
@@ -83,6 +85,7 @@ fun AppNavigation(
         composable("Funcionamiento") { FlujoPartidaMusScreen(navController) }
         composable("Puntuacion") { PuntuacionScreen(navController) }
         composable("Senales") { SenalesScreen(navController) }
+
         composable("Partida") {
             PartidaMusScreen(
                 navController = navController,
@@ -94,6 +97,7 @@ fun AppNavigation(
                 currentUsername = currentUsername
             )
         }
+
         composable("Registro") {
             RegistroScreen(
                 navController = navController,
@@ -102,12 +106,56 @@ fun AppNavigation(
                 onRegistroOk = { navController.popBackStack() }
             )
         }
+
         composable("Login") {
             LoginScreen(
                 navController = navController,
                 userViewModel = userViewModel,
                 context = context,
                 onLoginSuccess = { navController.popBackStack() }
+            )
+        }
+
+        composable("tests") {
+            TestsListScreen(
+                navController = navController,
+                testDao = db.testDao(),
+                currentUserId = currentUserId // ¡Este debe ser el ID correcto!
+            )
+        }
+
+        // Ruta corregida para testDetail
+        composable(
+            "testDetail/{testId}",
+            arguments = listOf(navArgument("testId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val testId = backStackEntry.arguments?.getInt("testId") ?: 0
+
+            TestDetailScreen(
+                testId = testId,
+                testDao = testDao,
+                navController = navController
+            )
+        }
+
+        // Ruta corregida para testResult
+        composable(
+            "testResult/{testId}/{score}/{total}",
+            arguments = listOf(
+                navArgument("testId") { type = NavType.IntType },
+                navArgument("score") { type = NavType.IntType },
+                navArgument("total") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val testId = backStackEntry.arguments?.getInt("testId") ?: 0
+            val score = backStackEntry.arguments?.getInt("score") ?: 0
+            val total = backStackEntry.arguments?.getInt("total") ?: 0
+
+            TestResultScreen(
+                navController = navController,
+                score = score,
+                totalQuestions = total,
+                testTitle = "Test" // O puedes obtenerlo de la BD si quieres
             )
         }
     }

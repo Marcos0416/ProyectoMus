@@ -4,40 +4,51 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [
         UserEntity::class,
         PartidaEntity::class,
         MovimientoEntity::class,
-        ProgressEntity::class
+        ProgressEntity::class,
+        TestEntity::class,
+        QuestionEntity::class
     ],
-    version = 4,
+    version = 10, // Incrementa la versión
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
-    // --- DAOs ---
     abstract fun userDao(): UserDao
     abstract fun partidaDao(): PartidaDao
     abstract fun movimientoDao(): MovimientoDao
     abstract fun progressDao(): ProgressDao
+    abstract fun testDao(): TestDao
 
-    // --- Singleton para obtener la base de datos ---
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
         fun getDatabase(context: Context): AppDatabase {
-            // Si ya existe la instancia, la devuelve. Si no, la crea.
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "app_database" // nombre del archivo de la base de datos
+                    "app_database"
                 )
-                    // ⚠️ Solo durante desarrollo: borra y recrea la BBDD si cambia el número de versión
                     .fallbackToDestructiveMigration()
+                    .addCallback(object : RoomDatabase.Callback() {
+                        override fun onCreate(db: SupportSQLiteDatabase) {
+                            super.onCreate(db)
+                            println("DEBUG: Base de datos CREADA desde cero")
+                        }
+
+                        override fun onOpen(db: SupportSQLiteDatabase) {
+                            super.onOpen(db)
+                            println("DEBUG: Base de datos ABIERTA")
+                        }
+                    })
                     .build()
 
                 INSTANCE = instance

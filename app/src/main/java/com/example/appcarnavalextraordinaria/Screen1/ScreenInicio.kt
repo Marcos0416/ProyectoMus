@@ -214,8 +214,9 @@ fun MainScreen(
                         title = "Test de conocimientos",
                         description = "Ponte a prueba sobre lo que has aprendido.",
                         imageRes = R.drawable.examenmus,
-                        onClick = { navController.navigate("test") }
+                        onClick = { navController.navigate("tests") }
                     )
+
                 }
 
                 // --- Progreso del usuario ---
