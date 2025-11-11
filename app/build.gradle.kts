@@ -71,6 +71,9 @@ dependencies {
     implementation(libs.androidx.media3.common.ktx)
     implementation(libs.androidx.foundation.layout.android)
     implementation(libs.androidx.foundation.layout.android)
+    implementation(libs.androidx.foundation.layout.android)
+    implementation(libs.ui.test.android)
+    implementation(libs.androidx.foundation.android)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

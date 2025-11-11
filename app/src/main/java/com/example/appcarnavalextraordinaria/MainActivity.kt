@@ -17,7 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.appcarnavalextraordinaria.Navigation.AppNavigation
 import com.example.appcarnavalextraordinaria.Screen1.MainViewModel
-import com.example.appcarnavalextraordinaria.Screen2.EncuestaViewModel
+
 
 
 

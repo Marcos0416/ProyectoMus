@@ -19,7 +19,7 @@ import com.example.appcarnavalextraordinaria.Login.UserViewModel
 import com.example.appcarnavalextraordinaria.PartidasInteractivas.PartidaMusScreen
 import com.example.appcarnavalextraordinaria.Screen1.MainScreen
 import com.example.appcarnavalextraordinaria.Screen1.MainViewModel
-import com.example.appcarnavalextraordinaria.Screen2.EncuestaViewModel
+
 import com.example.appcarnavalextraordinaria.Screen2.EstrategiasScreen
 import com.example.appcarnavalextraordinaria.Screen2.FlujoPartidaMusScreen
 import com.example.appcarnavalextraordinaria.Screen2.MazoCartasScreen
