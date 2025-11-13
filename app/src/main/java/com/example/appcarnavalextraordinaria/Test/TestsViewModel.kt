@@ -76,46 +76,46 @@ class TestsViewModel(
         val test1Id = testDao.insertTest(
             TestEntity(
                 title = "Fundamentos del Mus",
-                description = "Conceptos básicos y reglas esenciales",
-                createdBy = currentUserId
+                description = "Conceptos básicos y reglas esenciales"
+
             )
         ).toInt()
 
         val test2Id = testDao.insertTest(
             TestEntity(
                 title = "Señales y Comunicación",
-                description = "Lenguaje no verbal y estrategias de equipo",
-                createdBy = currentUserId
+                description = "Lenguaje no verbal y estrategias de equipo"
+
             )
         ).toInt()
 
         val test3Id = testDao.insertTest(
             TestEntity(
                 title = "Estrategias Avanzadas",
-                description = "Técnicas para jugadores experimentados",
-                createdBy = currentUserId
+                description = "Técnicas para jugadores experimentados"
+
             )
         ).toInt()
 
         val test4Id = testDao.insertTest(
             TestEntity(
                 title = "Puntuación y Juego",
-                description = "Cálculo de puntos y situaciones de juego",
-                createdBy = currentUserId
+                description = "Cálculo de puntos y situaciones de juego"
+
             )
         ).toInt()
         val test5Id = testDao.insertTest(
             TestEntity(
                 title = "Situaciones Especiales",
-                description = "Casos particulares y reglas avanzadas",
-                createdBy = currentUserId
+                description = "Casos particulares y reglas avanzadas"
+
             )
         ).toInt()
         val test6Id = testDao.insertTest(
             TestEntity(
                 title = "Historia y Cultura",
-                description = "Orígenes y variantes del Mus",
-                createdBy = currentUserId
+                description = "Orígenes y variantes del Mus"
+
             )
         ).toInt()
 

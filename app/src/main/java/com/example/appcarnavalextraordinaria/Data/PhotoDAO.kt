@@ -13,10 +13,10 @@ interface ProgressDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProgress(progress: ProgressEntity)
 
-    @Query("SELECT * FROM progress WHERE userId = :userId") // ✅ coincide con tableName
+    @Query("SELECT * FROM progreso WHERE userId = :userId") // ✅ coincide con tableName
     suspend fun getProgress(userId: Int): List<ProgressEntity>
 
-    @Query("SELECT * FROM progress WHERE userId = :userId ORDER BY lastAccess DESC")
+    @Query("SELECT * FROM progreso WHERE userId = :userId ORDER BY lastAccess DESC")
     fun getProgressByUser(userId: Int): kotlinx.coroutines.flow.Flow<List<ProgressEntity>>
 
     @Update

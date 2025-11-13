@@ -1071,7 +1071,7 @@ class MusGameViewModel(
         }
         // En juego, si hay ganadores automáticos, la partida termina inmediatamente
         _mensajes.value = "Partida terminada. ${_mensajes.value}"
-        guardarResultadoPartida("Ganadores automáticos de Juego")
+        guardarResultadoPartida("Ronda completada (${_pareja1Puntos.value} - ${_pareja2Puntos.value})")
         actualizarProgresoJugador()
     }
     private fun calcularGanadorChica(): Jugador? {

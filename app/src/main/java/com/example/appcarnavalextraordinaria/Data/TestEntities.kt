@@ -10,11 +10,11 @@ data class TestEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val title: String,
-    val description: String? = null,
-    val createdBy: Int
+    val description: String? = null
+
 )
 
-@Entity(tableName = "questions")
+@Entity(tableName = "preguntas")
 data class QuestionEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,

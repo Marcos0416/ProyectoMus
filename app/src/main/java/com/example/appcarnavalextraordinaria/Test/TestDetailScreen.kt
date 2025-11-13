@@ -33,14 +33,23 @@ fun TestDetailScreen(
     var currentIndex by remember { mutableStateOf(0) }
     var selectedAnswer by remember { mutableStateOf<Int?>(null) }
     var showResults by remember { mutableStateOf(false) }
+    // Map para guardar las respuestas del usuario: clave = índice de la pregunta, valor = índice de la opción seleccionada
+    var userAnswers by remember { mutableStateOf<Map<Int, Int>>(emptyMap()) }
 
     val currentQuestion = questions.getOrNull(currentIndex)
     val totalQuestions = questions.size
 
+    // Efecto para cargar la respuesta previamente seleccionada al cambiar la pregunta actual
+    LaunchedEffect(currentIndex) {
+        selectedAnswer = userAnswers[currentIndex]
+    }
+
     if (showResults) {
+        // Calcular el score real: comparar cada respuesta del usuario con la correcta
         val score = questions.indices.count { index ->
-            // Calcular puntuación basada en respuestas (aquí simplificado)
-            true // En una implementación real, llevarías cuenta de las respuestas
+            val userAnswerIndex = userAnswers[index]
+            val correctAnswerIndex = questions[index].correctIndex
+            userAnswerIndex == correctAnswerIndex
         }
         TestResultScreen(
             navController = navController,
@@ -171,6 +180,8 @@ fun TestDetailScreen(
                                     indication = LocalIndication.current,
                                     onClick = {
                                         selectedAnswer = index
+                                        // Actualizar el mapa de respuestas del usuario
+                                        userAnswers = userAnswers + (currentIndex to index)
                                     }
                                 )
                             ,
@@ -196,7 +207,10 @@ fun TestDetailScreen(
                             ) {
                                 RadioButton(
                                     selected = isSelected,
-                                    onClick = { selectedAnswer = index },
+                                    onClick = {
+                                        selectedAnswer = index
+                                        userAnswers = userAnswers + (currentIndex to index)
+                                    },
                                     colors = RadioButtonDefaults.colors(
                                         selectedColor = MaterialTheme.colorScheme.primary
                                     )
@@ -224,7 +238,7 @@ fun TestDetailScreen(
                     onClick = {
                         if (currentIndex > 0) {
                             currentIndex--
-                            selectedAnswer = null
+                            // La respuesta para la nueva pregunta actual se cargará mediante el efecto
                         }
                     },
                     enabled = currentIndex > 0,
@@ -239,7 +253,7 @@ fun TestDetailScreen(
                     onClick = {
                         if (currentIndex < totalQuestions - 1) {
                             currentIndex++
-                            selectedAnswer = null
+                            // La respuesta para la nueva pregunta actual se cargará mediante el efecto
                         } else {
                             showResults = true
                         }

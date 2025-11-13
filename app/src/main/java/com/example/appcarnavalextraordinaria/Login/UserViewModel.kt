@@ -12,18 +12,29 @@ class UserViewModel(private val userDao: UserDao) : ViewModel() {
 
     fun login(username: String, password: String, context: Context) {
         viewModelScope.launch {
-            val user = userDao.authenticateUser(username, password)
-            if (user != null) {
-                android.util.Log.d("DEBUG", "Usuario autenticado -> id=${user.id}, username=${user.username}")
+            val user = userDao.getUserByUsername(username)
 
-                saveSession(context, user)   // <--- guarda ID + username
-                _loggedInUser.postValue(user)
+            if (user != null) {
+                // 🔒 Hasheamos la contraseña introducida
+                val hashedInput = PasswordUtils.hashPassword(password)
+
+                // Comparamos con la contraseña hasheada almacenada
+                if (user.password == hashedInput) {
+                    android.util.Log.d("DEBUG", "Usuario autenticado -> id=${user.id}, username=${user.username}")
+
+                    saveSession(context, user)   // guarda ID + username
+                    _loggedInUser.postValue(user)
+                } else {
+                    android.util.Log.d("DEBUG", "Contraseña incorrecta para usuario=$username")
+                    _loggedInUser.postValue(null)
+                }
             } else {
-                android.util.Log.d("DEBUG", "Login fallido para usuario=$username")
+                android.util.Log.d("DEBUG", "Usuario no encontrado: $username")
                 _loggedInUser.postValue(null)
             }
         }
     }
+
 
 
     fun getUserId(context: Context): Int {
@@ -38,14 +49,21 @@ class UserViewModel(private val userDao: UserDao) : ViewModel() {
     suspend fun registerUser(username: String, password: String, context: Context): Boolean {
         val existingUser = userDao.getUserByUsername(username)
         if (existingUser == null) {
-            val newUser = UserEntity(username = username, password = password, email = "")
-            val newId = userDao.insertUser(newUser).toInt()   // guarda el ID autogenerado
-            saveSession(context, newUser.copy(id = newId))   // <--- guarda también el ID
+
+            val hashedPassword = PasswordUtils.hashPassword(password)
+            val newUser = UserEntity(username = username, password = hashedPassword, email = "")
+
+            // 👇 Solo una inserción
+            val newId = userDao.insertUser(newUser).toInt()
+
+            // Guardar sesión con el ID real
+            saveSession(context, newUser.copy(id = newId))
             _loggedInUser.postValue(newUser.copy(id = newId))
             return true
         }
         return false
     }
+
 
     fun saveSession(context: Context, user: UserEntity) {
         val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)

@@ -17,13 +17,13 @@ interface TestDao {
     @Query("SELECT * FROM tests")
     fun getAllTests(): Flow<List<TestEntity>>
 
-    @Query("SELECT * FROM questions WHERE testId = :testId ORDER BY id")
+    @Query("SELECT * FROM preguntas WHERE testId = :testId ORDER BY id")
     fun getQuestionsForTest(testId: Int): Flow<List<QuestionEntity>>
 
     @Query("DELETE FROM tests")
     suspend fun deleteAllTests()
 
-    @Query("DELETE FROM questions")
+    @Query("DELETE FROM preguntas")
     suspend fun deleteAllQuestions()
 
     @Query("SELECT * FROM tests WHERE id = :testId LIMIT 1")
