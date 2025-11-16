@@ -21,11 +21,8 @@ import com.example.appcarnavalextraordinaria.Navigation.Bars
 
 @Composable
 fun EstrategiasScreen(navController: NavController) {
-    Bars(navController = navController) { modifier ->
-        Surface(
-            modifier = modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
+
+         
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -125,8 +122,8 @@ fun EstrategiasScreen(navController: NavController) {
                     }
                 }
             }
-        }
-    }
+
+
 }
 
 @Composable

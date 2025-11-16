@@ -20,8 +20,7 @@ import com.example.appcarnavalextraordinaria.Navigation.Bars
 
 @Composable
 fun FlujoPartidaMusScreen(navController: NavController) {
-    Bars(navController = navController) { modifier ->
-        Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+
             Column(modifier = Modifier.fillMaxSize()) {
                 // Header
                 Box(
@@ -146,8 +145,7 @@ fun FlujoPartidaMusScreen(navController: NavController) {
                     }
                 }
             }
-        }
-    }
+
 }
 
 @Composable

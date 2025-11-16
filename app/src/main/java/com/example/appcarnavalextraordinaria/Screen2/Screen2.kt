@@ -24,11 +24,7 @@ import com.example.appcarnavalextraordinaria.Navigation.Bars
 
 @Composable
 fun TutorialesScreen(navController: NavController) {
-    Bars(navController = navController) { modifier ->
-        Surface(
-            modifier = modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -141,18 +137,10 @@ fun TutorialesScreen(navController: NavController) {
                         )
                     }
 
-                    item {
-                        TutorialCard(
-                            title = "Señales y Comunicación",
-                            description = "Lenguaje no verbal del Mus",
-                            icon = Icons.Default.Visibility,
-                            color = MaterialTheme.colorScheme.tertiary,
-                            onClick = { navController.navigate("Senales") }
-                        )
-                    }
+
 
                     item {
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(30.dp))
                         OutlinedButton(
                             onClick = { navController.popBackStack() },
                             modifier = Modifier
@@ -173,8 +161,7 @@ fun TutorialesScreen(navController: NavController) {
                     }
                 }
             }
-        }
-    }
+
 }
 
 @Composable

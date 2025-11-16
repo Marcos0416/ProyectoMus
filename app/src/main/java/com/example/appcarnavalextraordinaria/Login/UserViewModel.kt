@@ -46,12 +46,17 @@ class UserViewModel(private val userDao: UserDao) : ViewModel() {
 
 
 
-    suspend fun registerUser(username: String, password: String, context: Context): Boolean {
+    suspend fun registerUser(username: String, password: String, context: Context,email: String,): Boolean {
         val existingUser = userDao.getUserByUsername(username)
         if (existingUser == null) {
 
             val hashedPassword = PasswordUtils.hashPassword(password)
-            val newUser = UserEntity(username = username, password = hashedPassword, email = "")
+            val newUser = UserEntity(
+                username = username,
+                password = hashedPassword,
+                email = email
+            )
+
 
             // 👇 Solo una inserción
             val newId = userDao.insertUser(newUser).toInt()

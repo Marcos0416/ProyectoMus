@@ -25,8 +25,7 @@ import com.example.appcarnavalextraordinaria.Navigation.Bars
 
 @Composable
 fun MazoCartasScreen(navController: NavController) {
-    Bars(navController = navController) { modifier ->
-        Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+
             Column(modifier = Modifier.fillMaxSize()) {
                 // Header
                 Box(
@@ -143,8 +142,7 @@ fun MazoCartasScreen(navController: NavController) {
                     }
                 }
             }
-        }
-    }
+
 }
 
 @Composable

@@ -89,6 +89,7 @@ fun RegistroScreen(
     context: Context,
     onRegistroOk: () -> Unit
 ) {
+    var email by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -112,8 +113,19 @@ fun RegistroScreen(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(32.dp))
 
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Email") },
+                singleLine = true,
+                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
@@ -163,7 +175,7 @@ fun RegistroScreen(
             Button(
                 onClick = {
                     when {
-                        username.isBlank() || password.isBlank() || confirmPassword.isBlank() -> {
+                        email.isBlank() || username.isBlank() || password.isBlank() || confirmPassword.isBlank() -> {
                             errorMsg = "Por favor, completa todos los campos"
                         }
                         password != confirmPassword -> {
@@ -172,7 +184,7 @@ fun RegistroScreen(
                         else -> {
                             errorMsg = ""
                             scope.launch {
-                                val success = userViewModel.registerUser(username, password, context)
+                                val success = userViewModel.registerUser(username, password, context,email)
                                 if (success) {
                                     onRegistroOk()
                                 } else {

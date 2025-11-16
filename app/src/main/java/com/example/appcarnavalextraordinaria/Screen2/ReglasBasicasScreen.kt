@@ -19,8 +19,7 @@ import com.example.appcarnavalextraordinaria.Navigation.Bars
 
 @Composable
 fun ReglasBasicasScreen(navController: NavController) {
-    Bars(navController = navController) { modifier ->
-        Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+
             Column(modifier = Modifier.fillMaxSize()) {
                 // Header
                 Box(
@@ -123,8 +122,7 @@ fun ReglasBasicasScreen(navController: NavController) {
                     }
                 }
             }
-        }
-    }
+
 }
 
 @Composable

@@ -126,6 +126,13 @@ class MusGameViewModel(
     private val _pareja2Puntos = MutableStateFlow(0)
     val pareja2Puntos: StateFlow<Int> = _pareja2Puntos
 
+    private val _partidaTerminada = MutableStateFlow(false)
+    val partidaTerminada: StateFlow<Boolean> = _partidaTerminada
+
+    private val _resultadoPartida = MutableStateFlow("")
+    val resultadoPartida: StateFlow<String> = _resultadoPartida
+
+
     // Definir parejas (0-1 y 2-3)
     private val parejas = listOf(
         listOf(0, 1), // Tú y Bot 1
@@ -167,8 +174,8 @@ class MusGameViewModel(
 
     private fun guardarResultadoPartida(resultado: String) {
         viewModelScope.launch {
+            _resultadoPartida.value = resultado // ← Actualiza inmediatamente
             partidaIdActual?.let { id ->
-                // Obtener la partida actual, actualizar el resultado y guardarla
                 val partida = partidaDao.getPartidaById(id)
                 partida?.let {
                     val partidaActualizada = it.copy(resultado = resultado)
@@ -177,6 +184,8 @@ class MusGameViewModel(
             }
         }
     }
+
+
 
     private fun actualizarProgresoJugador() {
         viewModelScope.launch {
@@ -240,7 +249,8 @@ class MusGameViewModel(
     fun reiniciarPartidaCompleta() {
         _pareja1Puntos.value = 0
         _pareja2Puntos.value = 0
-        partidaIdActual = null // Para crear nueva partida en la BD
+        partidaIdActual = null
+        _resultadoPartida.value = "" // Resetear el resultado
         repartirCartas()
     }
 
@@ -670,45 +680,57 @@ class MusGameViewModel(
 
         return puntosPorJugador(p1) + puntosPorJugador(p2)
     }
+    private fun guardarPartidaCompleta() {
+        viewModelScope.launch {
+            val puntosPareja1 = _pareja1Puntos.value
+            val puntosPareja2 = _pareja2Puntos.value
+
+            // Determinar ganador
+            val ganadores = if (puntosPareja1 >= 40) {
+                "Ganadores: Pareja 1 ($puntosPareja1-$puntosPareja2)"
+            } else {
+                "Ganadores: Pareja 2 ($puntosPareja1-$puntosPareja2)"
+            }
+
+            // Crear la partida con toda la información
+            val partida = PartidaEntity(
+                createdBy = currentUserId,
+                resultado = ganadores
+            )
+
+            partidaDao.insertPartida(partida)
+            Log.d("PARTIDA", "Partida guardada: $ganadores")
+        }
+    }
 
     // 🏁 Comprobar si una pareja llega a 40 puntos
     private fun comprobarFinDePartida() {
+        val puntosPareja1 = _pareja1Puntos.value
+        val puntosPareja2 = _pareja2Puntos.value
+
         when {
-            _pareja1Puntos.value >= 40 -> {
+            puntosPareja1 >= 40 -> {
                 _mensajes.value = "🎉 ¡${_jugadores.value[0].nombre} y ${_jugadores.value[1].nombre} habéis ganado la partida!"
                 _rondaActiva.value = false
 
-                // Determinar qué pareja ganó para guardar correctamente
-                val resultado = if (_pareja1Puntos.value >= 40) {
-                    "Ganadores: Pareja 1 (${_pareja1Puntos.value} - ${_pareja2Puntos.value})"
-                } else {
-                    "Ganadores: Pareja 2 (${_pareja1Puntos.value} - ${_pareja2Puntos.value})"
-                }
-
+                val resultado = "Ganadores: Pareja 1 (${puntosPareja1} - ${puntosPareja2})"
                 guardarResultadoPartida(resultado)
-                actualizarProgresoJugador()
 
-
-
-                // Opcional: reiniciar automáticamente después de un tiempo
-                Handler(Looper.getMainLooper()).postDelayed({
-                    reiniciarPartidaCompleta()
-                }, 5000)
+                _partidaTerminada.value = true   // ← INDICA QUE TERMINÓ LA PARTIDA
             }
-            _pareja2Puntos.value >= 40 -> {
+
+            puntosPareja2 >= 40 -> {
                 _mensajes.value = "💀 ¡${_jugadores.value[2].nombre} y ${_jugadores.value[3].nombre} han ganado la partida!"
                 _rondaActiva.value = false
 
-                val resultado = "Ganadores: Pareja 2 (${_pareja1Puntos.value} - ${_pareja2Puntos.value})"
+                val resultado = "Ganadores: Pareja 2 (${puntosPareja1} - ${puntosPareja2})"
                 guardarResultadoPartida(resultado)
-                actualizarProgresoJugador()
 
-                Handler(Looper.getMainLooper()).postDelayed({
-                    reiniciarPartidaCompleta()
-                }, 5000)
+                _partidaTerminada.value = true   // ← INDICA QUE TERMINÓ LA PARTIDA
             }
         }
     }
+
 
     private fun pasarApuestaOSiguienteRonda() {
         // Obtener la apuesta final de la ronda (embite)
@@ -1132,4 +1154,11 @@ class MusGameViewModel(
         }
         pasarApuestaOSiguienteRonda()
     }
+    fun reiniciarPartidaManual() {
+        _partidaTerminada.value = false
+        reiniciarPartidaCompleta()
+    }
+
+
+
 }

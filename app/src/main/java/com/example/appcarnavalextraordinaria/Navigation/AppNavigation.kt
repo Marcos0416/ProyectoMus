@@ -53,6 +53,7 @@ fun AppNavigation(
 
     // UserViewModel
     val userDao = db.userDao()
+    val partidaDao = db.partidaDao()
     val userViewModel: UserViewModel = viewModel(factory = UserViewModel.UserViewModelFactory(userDao))
 
     // Obtener el usuario logueado
@@ -71,7 +72,7 @@ fun AppNavigation(
             MainScreen(
                 navController = navController,
                 userViewModel = userViewModel,
-                progressDao = db.progressDao(),
+                partidaDao = partidaDao, // Cambiar progressDao por partidaDao
                 currentUserId = currentUserId,
                 currentUsername = currentUsername,
                 context = context

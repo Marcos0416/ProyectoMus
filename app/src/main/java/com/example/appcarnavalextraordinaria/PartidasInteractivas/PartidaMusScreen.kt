@@ -9,6 +9,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -70,14 +72,13 @@ fun PartidaMusScreen(navController: NavController,
     val cartasDescartadas by musGameViewModel.cartasDescartadas.collectAsState()
     val puntuacionesJuego by musGameViewModel.puntuacionesJuego.collectAsState()
 
+    val partidaTerminada by musGameViewModel.partidaTerminada.collectAsState()
+
+
 
     var cantidadSubir by remember { mutableStateOf("1") }
 
-    Bars(navController = navController) { modifier ->
-        Surface(
-            modifier = modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
+
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -398,19 +399,60 @@ fun PartidaMusScreen(navController: NavController,
                 }
 
                 item {
-                    if (!rondaActiva && cartasRepartidas && !rondaMusActiva) {
-                        Button(
-                            onClick = { musGameViewModel.nuevaMano() }, // <-- aquí
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Nueva Partida")
-                        }
+                    if (partidaTerminada) {
+                        val resultado by musGameViewModel.resultadoPartida.collectAsState()
+                        Text(
+                            text = resultado,
+                            color = Color.Red,
+                            fontSize = 20.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+
+                item {
+                    Button(
+                        onClick = { musGameViewModel.reiniciarPartidaManual() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Text("Reiniciar partida completa")
+                    }
+
+
+                }
+                item{
+                    Button(
+                        onClick = { musGameViewModel.nuevaMano() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Text("Repartir nuevas cartas")
+                    }
+
+                }
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(
+                        onClick = { navController.navigate("main") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Volver a la pantalla principal")
                     }
                 }
 
             }
-        }
-    }
+
 }
 
 @Composable

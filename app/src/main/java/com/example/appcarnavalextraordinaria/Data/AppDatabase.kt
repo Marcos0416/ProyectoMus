@@ -15,7 +15,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         TestEntity::class,
         QuestionEntity::class
     ],
-    version = 12, // Incrementa la versión
+    version = 18, // Incrementa la versión
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
