@@ -11,8 +11,7 @@ import com.example.appcarnavalextraordinaria.Data.MovimientoDao
 import com.example.appcarnavalextraordinaria.Data.MovimientoEntity
 import com.example.appcarnavalextraordinaria.Data.PartidaDao
 import com.example.appcarnavalextraordinaria.Data.PartidaEntity
-import com.example.appcarnavalextraordinaria.Data.ProgressDao
-import com.example.appcarnavalextraordinaria.Data.ProgressEntity
+
 import com.example.appcarnavalextraordinaria.Data.UserDao
 import com.example.appcarnavalextraordinaria.Login.UserViewModel
 import kotlinx.coroutines.launch
@@ -39,7 +38,7 @@ class MusGameViewModel(
     private val userDao: UserDao,
     private val partidaDao: PartidaDao,
     private val movimientoDao: MovimientoDao,
-    private val progressDao: ProgressDao,
+
     private val currentUserId: Int,
     private val currentUsername: String
 ) : ViewModel() {
@@ -187,18 +186,7 @@ class MusGameViewModel(
 
 
 
-    private fun actualizarProgresoJugador() {
-        viewModelScope.launch {
-            val puntos = _pareja1Puntos.value ?: 0
-            val progress = ProgressEntity(
-                userId = currentUserId,     // <--- el ID del usuario que está jugando
-                tutorialStep = 1,           // o el paso actual del tutorial
-                score = puntos,
-                lastAccess = System.currentTimeMillis()
-            )
-            progressDao.insertProgress(progress)
-        }
-    }
+
 
 
 
@@ -803,7 +791,7 @@ class MusGameViewModel(
                 if (_ganadorJuego.value == null) {
                     _mensajes.value = "Ronda de Juego finalizada. Partida terminada."
                     guardarResultadoPartida("Partida completada (${_pareja1Puntos.value} - ${_pareja2Puntos.value})")
-                    actualizarProgresoJugador()
+
                 }
                 _rondaJuegoActiva.value = false
             }
@@ -1103,7 +1091,7 @@ class MusGameViewModel(
         // En juego, si hay ganadores automáticos, la partida termina inmediatamente
         _mensajes.value = "Partida terminada. ${_mensajes.value}"
         guardarResultadoPartida("Ronda completada (${_pareja1Puntos.value} - ${_pareja2Puntos.value})")
-        actualizarProgresoJugador()
+
     }
     private fun calcularGanadorChica(): Jugador? {
         var ganador: Jugador? = null

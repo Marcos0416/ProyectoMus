@@ -81,23 +81,30 @@ import com.example.appcarnavalextraordinaria.R
 import com.example.appcarnavalextraordinaria.ui.theme.AplicacionOrdinariaInterfacesTheme
 
 
+// LoginScreen: Pantalla de inicio de sesión de la aplicación
 @Composable
 fun LoginScreen(
-    navController: NavController,
-    userViewModel: UserViewModel,
-    context: Context,
-    onLoginSuccess: () -> Unit
+    navController: NavController,     // Controlador de navegación para cambiar pantallas
+    userViewModel: UserViewModel,     // ViewModel que gestiona la lógica y datos de usuario
+    context: Context,                  // Contexto Android para acceso a recursos, Toast, etc.
+    onLoginSuccess: () -> Unit         // Callback que se ejecuta tras un login exitoso
 ) {
+    // Estado local para guardar el nombre de usuario introducido
     var username by remember { mutableStateOf("") }
+    // Estado local para guardar la contraseña introducida
     var password by remember { mutableStateOf("") }
+    // Estado observado del usuario actualmente logueado desde el ViewModel
     val loggedInUser by userViewModel.loggedInUser.observeAsState()
 
+    // Estado para controlar si se debe mostrar un mensaje de error al fallar el login
     var loginFailed by remember { mutableStateOf(false) }
 
+    // Contenedor principal con fondo de pantalla y tamaño completo
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
+        // Columna que alinea contenido centrado vertical y horizontalmente
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -105,6 +112,7 @@ fun LoginScreen(
                 .padding(24.dp)
                 .fillMaxWidth()
         ) {
+            // Título de la pantalla
             Text(
                 text = "Iniciar Sesión",
                 style = MaterialTheme.typography.headlineLarge,
@@ -113,6 +121,7 @@ fun LoginScreen(
             )
             Spacer(modifier = Modifier.height(32.dp))
 
+            // Campo de texto para el nombre de usuario con icono y etiqueta
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
@@ -123,6 +132,7 @@ fun LoginScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Campo de texto para la contraseña, con icono y ocultación de texto
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -133,6 +143,7 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // Mensaje de error que se muestra si el login ha fallado y los campos están llenos
             if (loginFailed && loggedInUser == null && username.isNotEmpty() && password.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
@@ -146,6 +157,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // Botón para iniciar sesión, llama al ViewModel y activa el flag de fallo
             Button(
                 onClick = {
                     userViewModel.login(username, password, context)
@@ -165,6 +177,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Botón para volver a la pantalla principal sin iniciar sesión
             OutlinedButton(
                 onClick = { navController.navigate("main") },
                 modifier = Modifier
@@ -177,6 +190,7 @@ fun LoginScreen(
         }
     }
 
+    // Efecto que escucha el cambio de usuario logueado para limpiar errores y notificar éxito
     LaunchedEffect(loggedInUser) {
         if (loggedInUser != null) {
             loginFailed = false
@@ -184,5 +198,7 @@ fun LoginScreen(
         }
     }
 }
+
+
 
 

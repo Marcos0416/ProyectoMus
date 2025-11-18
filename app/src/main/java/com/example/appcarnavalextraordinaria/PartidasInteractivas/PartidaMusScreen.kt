@@ -29,7 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.appcarnavalextraordinaria.Data.MovimientoDao
 import com.example.appcarnavalextraordinaria.Data.PartidaDao
-import com.example.appcarnavalextraordinaria.Data.ProgressDao
+
 import com.example.appcarnavalextraordinaria.Data.UserDao
 import com.example.appcarnavalextraordinaria.Navigation.Bars
 
@@ -39,7 +39,7 @@ fun PartidaMusScreen(navController: NavController,
                      userDao: UserDao,
                      partidaDao: PartidaDao,
                      movimientoDao: MovimientoDao,
-                     progressDao: ProgressDao,
+
                      currentUserId: Int,currentUsername: String
 ) {
     val context = LocalContext.current
@@ -49,7 +49,7 @@ fun PartidaMusScreen(navController: NavController,
     }
 
     val musGameViewModel: MusGameViewModel = viewModel(
-        factory = MusGameViewModelFactory(userDao, partidaDao, movimientoDao, progressDao, currentUserId, currentUsername  )
+        factory = MusGameViewModelFactory(userDao, partidaDao, movimientoDao, currentUserId, currentUsername  )
     )
     val jugadores by musGameViewModel.jugadores.collectAsState()
     val turno by musGameViewModel.turno.collectAsState()

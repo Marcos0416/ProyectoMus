@@ -1,5 +1,6 @@
 package com.example.appcarnavalextraordinaria.Login
 
+// Imports de librerías para construir la UI con Jetpack Compose y manejar estado, navegación y temas
 import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -54,7 +55,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -80,33 +80,37 @@ import com.example.appcarnavalextraordinaria.R
 import com.example.appcarnavalextraordinaria.ui.theme.AplicacionOrdinariaInterfacesTheme
 import kotlinx.coroutines.launch
 
-
-
+// Función composable que representa la pantalla de registro de usuario
 @Composable
 fun RegistroScreen(
-    navController: NavController,
-    userViewModel: UserViewModel,
-    context: Context,
-    onRegistroOk: () -> Unit
+    navController: NavController, // Controlador para navegación entre pantallas
+    userViewModel: UserViewModel, // ViewModel que maneja la lógica y datos de usuario
+    context: Context,              // Contexto Android para recursos y operaciones dependientes del sistema
+    onRegistroOk: () -> Unit       // Callback que se ejecuta cuando el registro es exitoso
 ) {
-    var email by remember { mutableStateOf("") }
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-    var errorMsg by remember { mutableStateOf("") }
-    val scope = rememberCoroutineScope()
+    // Variables de estado para almacenar los valores introducidos en los campos de texto
+    var email by remember { mutableStateOf("") }            // Email de usuario
+    var username by remember { mutableStateOf("") }         // Nombre de usuario
+    var password by remember { mutableStateOf("") }         // Contraseña
+    var confirmPassword by remember { mutableStateOf("") }  // Confirmación de contraseña
+    var errorMsg by remember { mutableStateOf("") }         // Mensaje de error para mostrar validaciones
 
+    val scope = rememberCoroutineScope()                    // Scope para lanzar corutinas (tareas asíncronas)
+
+    // Container principal que cubre toda la pantalla y establece el fondo
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
+        // Organiza los elementos en columna centrada horizontalmente y verticalmente
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
             modifier = Modifier
-                .padding(24.dp)
-                .fillMaxWidth()
+                .padding(24.dp)    // Padding alrededor para separar de los bordes
+                .fillMaxWidth()    // Ocupa todo el ancho disponible
         ) {
+            // Texto de título grande y negrita
             Text(
                 text = "Crear Cuenta",
                 style = MaterialTheme.typography.headlineLarge,
@@ -114,18 +118,19 @@ fun RegistroScreen(
                 color = MaterialTheme.colorScheme.primary
             )
 
-
+            // Campo de texto para email con icono de persona adelante
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                singleLine = true,
+                onValueChange = { email = it },            // Actualiza estado al escribir
+                label = { Text("Email") },                  // Etiqueta del campo
+                singleLine = true,                          // Solo una línea
                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
-
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp)) // Separador vertical
+
+            // Campo para el nombre de usuario
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
@@ -137,18 +142,20 @@ fun RegistroScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Campo para la contraseña con icono y texto oculto
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Contraseña") },
                 singleLine = true,
                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = PasswordVisualTransformation(), // Oculta el texto introducido
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Campo para confirmar contraseña, igual que el anterior
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
@@ -159,6 +166,7 @@ fun RegistroScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // Si hay un mensaje de error, lo mostramos en rojo y centrado
             if (errorMsg.isNotBlank()) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
@@ -172,23 +180,27 @@ fun RegistroScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // Botón para registrar, que al pulsar ejecuta lógica de validaciones y registro
             Button(
                 onClick = {
                     when {
+                        // Validación 1: Verifica que ningún campo esté vacío
                         email.isBlank() || username.isBlank() || password.isBlank() || confirmPassword.isBlank() -> {
                             errorMsg = "Por favor, completa todos los campos"
                         }
+                        // Validación 2: Compara que ambas contraseñas sean iguales
                         password != confirmPassword -> {
                             errorMsg = "Las contraseñas no coinciden"
                         }
+                        // Si pasa validaciones, intenta registrar el usuario
                         else -> {
-                            errorMsg = ""
-                            scope.launch {
-                                val success = userViewModel.registerUser(username, password, context,email)
+                            errorMsg = "" // Limpia mensajes previos
+                            scope.launch { // Lanza corutina para no bloquear UI
+                                val success = userViewModel.registerUser(username, password, context, email)
                                 if (success) {
-                                    onRegistroOk()
+                                    onRegistroOk() // Registro exitoso: ejecuta callback (e.g. navegar)
                                 } else {
-                                    errorMsg = "El usuario ya existe"
+                                    errorMsg = "El usuario ya existe" // Mostrar error si falla registro
                                 }
                             }
                         }
@@ -197,7 +209,7 @@ fun RegistroScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(16.dp) // Bordes redondeados para estilo moderno
             ) {
                 Text(
                     text = "Registrar",
@@ -205,7 +217,10 @@ fun RegistroScreen(
                     color = MaterialTheme.colorScheme.onPrimary
                 )
             }
+
             Spacer(modifier = Modifier.height(32.dp))
+
+            // Botón para volver a la pantalla principal sin registrar usuario
             OutlinedButton(
                 onClick = { navController.navigate("main") },
                 modifier = Modifier

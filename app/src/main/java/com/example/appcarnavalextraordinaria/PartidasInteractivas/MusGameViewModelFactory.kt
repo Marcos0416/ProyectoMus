@@ -11,7 +11,7 @@ class MusGameViewModelFactory(
     private val userDao: UserDao,
     private val partidaDao: PartidaDao,
     private val movimientoDao: MovimientoDao,
-    private val progressDao: ProgressDao,
+
     private val currentUserId: Int,
     private val currentUsername: String
 ) : ViewModelProvider.Factory {
@@ -22,7 +22,7 @@ class MusGameViewModelFactory(
                 userDao,
                 partidaDao,
                 movimientoDao,
-                progressDao,
+
                 currentUserId,
                 currentUsername
             ) as T

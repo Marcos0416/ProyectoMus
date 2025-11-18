@@ -11,7 +11,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         UserEntity::class,
         PartidaEntity::class,
         MovimientoEntity::class,
-        ProgressEntity::class,
+
         TestEntity::class,
         QuestionEntity::class,
         TestResultEntity::class
@@ -24,7 +24,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun partidaDao(): PartidaDao
     abstract fun movimientoDao(): MovimientoDao
-    abstract fun progressDao(): ProgressDao
+
     abstract fun testDao(): TestDao
     abstract fun testResultDao(): TestResultDao
 
