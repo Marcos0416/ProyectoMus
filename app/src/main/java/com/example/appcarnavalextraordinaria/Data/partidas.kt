@@ -8,7 +8,7 @@ data class PartidaEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val fecha: Long = System.currentTimeMillis(),
     val createdBy: Int, // FK UserEntity.id
-    var resultado: String, // Ej: "Ganadores: Pareja 1 (40-25)"
+    var resultado: String,
 
 
 )

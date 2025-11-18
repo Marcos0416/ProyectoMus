@@ -209,7 +209,10 @@ class MusGameViewModel(
     // ============================= FUNCIONES PRINCIPALES DEL JUEGO =============================
 
     fun repartirCartas() {
-        if (partidaIdActual == null) iniciarPartidaDB()
+        if (partidaIdActual == null)
+        {iniciarPartidaDB()
+            Log.d("Mus", "Partida DB iniciada con id: " +
+                    "$partidaIdActual")}
 
         val cartasValidas = (1..12).filterNot { it == 8 || it == 9 }
         siguienteIdCarta = 0
@@ -226,6 +229,9 @@ class MusGameViewModel(
         _rondaJuegoActiva.value = false
 
         jugadorInicioPartida = (jugadorInicioPartida + 1) % 4
+        Log.d("Mus", "Inicio partida, empieza jugador: " +
+                "${_jugadores.value[jugadorInicioPartida].nombre}")
+
         _turno.value = jugadorInicioPartida
         _mensajes.value = "Cartas repartidas. Comienza ${_jugadores.value[jugadorInicioPartida].nombre}."
         _acciones.value = emptyList()
@@ -241,6 +247,9 @@ class MusGameViewModel(
         _puntuacionesJuego.value = emptyList()
         _cartasDescartadas.value = List(4) { emptyList() }
         _musPedidos.value = MutableList(4) { false }
+
+        Log.d("MusGame", "Estado inicial " +
+                "de la partida configurado correctamente.")
 
         // NO resetear _pareja1Puntos y _pareja2Puntos aquí
     }

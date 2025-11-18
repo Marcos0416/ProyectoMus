@@ -16,25 +16,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.appcarnavalextraordinaria.Data.TestDao
+import com.example.appcarnavalextraordinaria.Data.TestResultDao
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TestDetailScreen(
     testId: Int,
     testDao: TestDao,
+    testResultDao: TestResultDao,
     navController: NavController,
+    currentUserId: Int,
     testTitle: String = "Test"
 ) {
+    val viewModel: TestsViewModel = viewModel(factory = object : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            return TestsViewModel(testDao, testResultDao, currentUserId) as T
+        }
+    })
+
     val questionsFlow = remember { testDao.getQuestionsForTest(testId) }
     val questions by questionsFlow.collectAsState(initial = emptyList())
 
     var currentIndex by remember { mutableStateOf(0) }
     var selectedAnswer by remember { mutableStateOf<Int?>(null) }
     var showResults by remember { mutableStateOf(false) }
-    // Map para guardar las respuestas del usuario: clave = índice de la pregunta, valor = índice de la opción seleccionada
     var userAnswers by remember { mutableStateOf<Map<Int, Int>>(emptyMap()) }
+    var hasSavedResult by remember { mutableStateOf(false) }
 
     val currentQuestion = questions.getOrNull(currentIndex)
     val totalQuestions = questions.size
@@ -44,18 +56,32 @@ fun TestDetailScreen(
         selectedAnswer = userAnswers[currentIndex]
     }
 
+    // Guardar resultado cuando se muestren los resultados
+    LaunchedEffect(showResults) {
+        if (showResults && !hasSavedResult) {
+            val score = questions.indices.count { index ->
+                val userAnswerIndex = userAnswers[index]
+                val correctAnswerIndex = questions[index].correctIndex
+                userAnswerIndex == correctAnswerIndex
+            }
+            viewModel.saveTestResult(testId, score, totalQuestions)
+            hasSavedResult = true
+        }
+    }
+
     if (showResults) {
-        // Calcular el score real: comparar cada respuesta del usuario con la correcta
         val score = questions.indices.count { index ->
             val userAnswerIndex = userAnswers[index]
             val correctAnswerIndex = questions[index].correctIndex
             userAnswerIndex == correctAnswerIndex
         }
+
         TestResultScreen(
             navController = navController,
             score = score,
             totalQuestions = totalQuestions,
-            testTitle = testTitle
+            testTitle = testTitle,
+            testId = testId
         )
         return
     }

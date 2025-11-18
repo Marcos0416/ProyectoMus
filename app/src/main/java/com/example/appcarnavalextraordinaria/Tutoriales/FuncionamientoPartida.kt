@@ -1,10 +1,9 @@
-package com.example.appcarnavalextraordinaria.Screen2
+package com.example.appcarnavalextraordinaria.Tutoriales
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -16,7 +15,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.appcarnavalextraordinaria.Navigation.Bars
 
 @Composable
 fun FlujoPartidaMusScreen(navController: NavController) {

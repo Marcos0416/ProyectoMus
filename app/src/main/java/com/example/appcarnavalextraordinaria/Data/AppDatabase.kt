@@ -13,9 +13,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         MovimientoEntity::class,
         ProgressEntity::class,
         TestEntity::class,
-        QuestionEntity::class
+        QuestionEntity::class,
+        TestResultEntity::class
     ],
-    version = 18, // Incrementa la versión
+    version = 19, // Incrementa la versión
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -25,6 +26,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun movimientoDao(): MovimientoDao
     abstract fun progressDao(): ProgressDao
     abstract fun testDao(): TestDao
+    abstract fun testResultDao(): TestResultDao
 
     companion object {
         @Volatile

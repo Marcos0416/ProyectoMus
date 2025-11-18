@@ -1,25 +1,27 @@
-package com.example.appcarnavalextraordinaria.Screen2
+package com.example.appcarnavalextraordinaria.Tutoriales
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Casino
+import androidx.compose.material.icons.filled.Deck
+import androidx.compose.material.icons.filled.FormatListNumbered
+import androidx.compose.material.icons.filled.Style
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.appcarnavalextraordinaria.Navigation.Bars
 
 @Composable
-fun PuntuacionScreen(navController: NavController) {
+fun MazoCartasScreen(navController: NavController) {
 
             Column(modifier = Modifier.fillMaxSize()) {
                 // Header
@@ -39,13 +41,13 @@ fun PuntuacionScreen(navController: NavController) {
                 ) {
                     Column {
                         Text(
-                            text = "Sistema de Puntuación",
+                            text = "Mazo y Cartas",
                             style = MaterialTheme.typography.headlineLarge,
                             color = Color.White,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Cómo se contabilizan los puntos en el Mus",
+                            text = "Conoce las herramientas del juego",
                             style = MaterialTheme.typography.titleMedium,
                             color = Color.White.copy(alpha = 0.9f)
                         )
@@ -59,76 +61,66 @@ fun PuntuacionScreen(navController: NavController) {
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     item {
-                        Text(
-                            text = "Objetivo del Juego",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        Text(
-                            text = "Gana la pareja que primero alcance 40 puntos. Los puntos se consiguen mediante apuestas ganadas en cada ronda.",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.3
+                        InfoCard(
+                            icon = Icons.Default.Deck,
+                            title = "Mazo Español",
+                            content = "El Mus utiliza un mazo español de 40 cartas con cuatro palos: oros, copas, espadas y bastos."
                         )
                     }
 
                     item {
-                        ScoringPhaseCard(
-                            phaseName = "Grande",
-                            points = "1 punto",
-                            description = "Se gana por tener la carta más alta. Reyes (3 y 12) son los más valiosos."
+                        InfoCard(
+                            icon = Icons.Default.FormatListNumbered,
+                            title = "Composición",
+                            content = "Cada palo contiene números del 1 al 7 y las figuras: sota, caballo y rey."
                         )
                     }
 
                     item {
-                        ScoringPhaseCard(
-                            phaseName = "Chica",
-                            points = "1 punto",
-                            description = "Se gana por tener la carta más baja. Ases (1 y 2) son los más valiosos."
-                        )
-                    }
-
-                    item {
-                        ScoringPhaseCard(
-                            phaseName = "Pares",
-                            points = "Variable",
-                            description = "• Parejas simples: 1 punto\n• Medias: 2 puntos\n• Duples: 3 puntos\nSe suman embites adicionales."
-                        )
-                    }
-
-                    item {
-                        ScoringPhaseCard(
-                            phaseName = "Juego",
-                            points = "Variable",
-                            description = "• Juego normal (≥31): 2 puntos\n• 31 exacto: 3 puntos\n• Se suman embites adicionales.\nSi nadie tiene juego, se juega al punto."
+                        InfoCard(
+                            icon = Icons.Default.Casino,
+                            title = "Valores Especiales",
+                            content = "Los 3 y 12 son reyes (valen 10). Los 1 y 2 son ases (valen 1). Las figuras valen 10 puntos."
                         )
                     }
 
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                                containerColor = MaterialTheme.colorScheme.surface
                             )
                         ) {
                             Column(modifier = Modifier.padding(20.dp)) {
                                 Text(
-                                    text = "🎯 Órdago",
+                                    text = "📊 Ejemplo de Cálculo",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(bottom = 8.dp)
                                 )
-                                Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Apuesta total donde la pareja ganadora suma todos los puntos restantes para ganar la partida inmediatamente.",
+                                    text = "Mano: 4, 6, 2, Sota\n" +
+                                            "Cálculo: 4 + 6 + 1 + 10 = 21 puntos\n\n" +
+                                            "• 2 vale 1 punto\n" +
+                                            "• 4 vale 4 puntos\n" +
+                                            "• 6 vale 6 puntos\n" +
+                                            "• Sota vale 10 puntos",
                                     style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f),
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.3
                                 )
                             }
                         }
+                    }
+
+                    item {
+                        InfoCard(
+                            icon = Icons.Default.Style,
+                            title = "Reparto Inicial",
+                            content = "Cada jugador recibe 4 cartas al inicio de la partida. El valor de cada carta varía según la apuesta en curso."
+                        )
                     }
 
                     item {
@@ -151,7 +143,7 @@ fun PuntuacionScreen(navController: NavController) {
 }
 
 @Composable
-fun ScoringPhaseCard(phaseName: String, points: String, description: String) {
+fun InfoCard(icon: ImageVector, title: String, content: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -161,35 +153,26 @@ fun ScoringPhaseCard(phaseName: String, points: String, description: String) {
             modifier = Modifier.padding(20.dp),
             verticalAlignment = Alignment.Top
         ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = phaseName,
+                    text = title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = description,
+                    text = content,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                     lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.3
-                )
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Box(
-                modifier = Modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
-            ) {
-                Text(
-                    text = points,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }

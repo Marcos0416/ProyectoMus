@@ -13,3 +13,6 @@ data class MovimientoEntity(
     val cantidad: Int?,
     val timestamp: Long = System.currentTimeMillis()
 )
+
+
+

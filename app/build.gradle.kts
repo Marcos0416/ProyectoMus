@@ -74,6 +74,7 @@ dependencies {
     implementation(libs.androidx.foundation.layout.android)
     implementation(libs.ui.test.android)
     implementation(libs.androidx.foundation.android)
+    implementation(libs.junit.junit)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -94,6 +95,9 @@ dependencies {
     kapt("androidx.room:room-compiler:2.6.0-alpha01")
 
     implementation("androidx.compose.material:material-icons-extended:1.6.8")
+
+
+    testImplementation ("junit:junit:4.13.2")
 }
 
 /*

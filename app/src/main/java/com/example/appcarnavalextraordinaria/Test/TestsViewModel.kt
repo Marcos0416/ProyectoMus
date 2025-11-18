@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 
 class TestsViewModel(
     private val testDao: TestDao,
+    private val testResultDao: TestResultDao,
     private val currentUserId: Int
 ) : ViewModel() {
 
@@ -51,17 +52,13 @@ class TestsViewModel(
         val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         val firstLaunch = prefs.getBoolean("first_launch_tests", true)
 
-        println("DEBUG: First launch: $firstLaunch, UserId: $currentUserId")
+
 
         // Verificar si ya hay tests
         val existingTests = testDao.getAllTests().first()
         println("DEBUG: Tests existentes en BD: ${existingTests.size}")
 
-        if (existingTests.isNotEmpty()) {
-            println("DEBUG: Ya existen tests, marcando firstLaunch como false")
-            prefs.edit().putBoolean("first_launch_tests", false).apply()
-            return
-        }
+
 
         if (!firstLaunch) {
             println("DEBUG: No es primera vez y no hay tests, creando de todos modos")
@@ -300,19 +297,33 @@ class TestsViewModel(
         val questionsCount1 = testDao.getQuestionsForTest(test1Id).first().size
         val questionsCount2 = testDao.getQuestionsForTest(test2Id).first().size
 
-        println("DEBUG: Verificación - Tests: ${finalTests.size}, Preguntas Test1: $questionsCount1, Preguntas Test2: $questionsCount2")
+        println("DEBUG: Verificación - Tests: ${finalTests.size}, " +
+                "Preguntas Test1: $questionsCount1, Preguntas Test2: " +
+                "$questionsCount2")
 
-        // Marcar como completado
-        prefs.edit().putBoolean("first_launch_tests", false).apply()
-        println("DEBUG: Tests creados exitosamente!")
+    }
+    // Función para guardar el resultado del test
+    fun saveTestResult(testId: Int, score: Int, totalQuestions: Int) {
+        viewModelScope.launch {
+            val testResult = TestResultEntity(
+                userId = currentUserId,
+                testId = testId,
+                score = score,
+                maxScore = totalQuestions
+            )
+            testResultDao.insertTestResult(testResult)
+            println("DEBUG: Resultado guardado - Test: $testId, " +
+                    "Score: $score/$totalQuestions")
+        }
     }
 
-    // Función para forzar recreación (debug)
-    fun forceCreateTests(context: Context) {
-        viewModelScope.launch {
-            val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-            prefs.edit().putBoolean("first_launch_tests", true).apply()
-            createSampleTestsIfFirstLaunch(context)
-        }
+    // Función para obtener el historial de tests del usuario
+    fun getTestResults() = testResultDao.getTestResultsByUser(currentUserId)
+
+    // Función para obtener estadísticas
+    suspend fun getTestStats(): Pair<Int, Double?> {
+        val completedTests = testResultDao.getCompletedTestsCount(currentUserId)
+        val averageScore = testResultDao.getAverageScore(currentUserId)
+        return Pair(completedTests, averageScore)
     }
 }

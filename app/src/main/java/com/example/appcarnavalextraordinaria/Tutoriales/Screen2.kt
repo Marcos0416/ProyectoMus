@@ -1,4 +1,4 @@
-package com.example.appcarnavalextraordinaria.Screen2
+package com.example.appcarnavalextraordinaria.Tutoriales
 
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
@@ -20,7 +20,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.appcarnavalextraordinaria.Navigation.Bars
 
 @Composable
 fun TutorialesScreen(navController: NavController) {

@@ -21,7 +21,8 @@ fun TestResultScreen(
     navController: NavController,
     score: Int,
     totalQuestions: Int,
-    testTitle: String = "Test"
+    testTitle: String = "Test",
+    testId: Int  // ← AÑADE ESTE PARÁMETRO
 ) {
     val percentage = (score.toFloat() / totalQuestions.toFloat()) * 100
 
@@ -56,10 +57,15 @@ fun TestResultScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Resultados") },
+                title = { Text("Resultados - $testTitle") },  // ← MUESTRA EL TÍTULO DEL TEST
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás")
+                    IconButton(onClick = {
+                        // Navegar al inicio de tests en lugar de solo back
+                        navController.navigate("tests") {
+                            popUpTo("tests") { inclusive = true }
+                        }
+                    }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver a tests")
                     }
                 }
             )
@@ -104,6 +110,16 @@ fun TestResultScreen(
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
+
+                    // Información del test
+                    Text(
+                        text = testTitle,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     // Puntuación circular
                     Box(
@@ -163,6 +179,16 @@ fun TestResultScreen(
                             trackColor = color.copy(alpha = 0.2f)
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Información de guardado
+                    Text(
+                        text = "✅ Resultado guardado en tu historial",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
 

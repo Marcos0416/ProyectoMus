@@ -24,3 +24,15 @@ data class QuestionEntity(
     val options: String,
     val correctIndex: Int
 )
+
+// Versión mínima pero útil
+@Entity(tableName = "resultado_test")
+data class TestResultEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val userId: Int,
+    val testId: Int,
+    val score: Int,
+    val maxScore: Int,
+    val completedAt: Long = System.currentTimeMillis()
+)

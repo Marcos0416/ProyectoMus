@@ -27,6 +27,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.appcarnavalextraordinaria.Data.TestDao
 import com.example.appcarnavalextraordinaria.Data.TestEntity
+import com.example.appcarnavalextraordinaria.Data.TestResultDao
 import com.example.appcarnavalextraordinaria.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,12 +35,13 @@ import com.example.appcarnavalextraordinaria.R
 fun TestsListScreen(
     navController: NavController,
     testDao: TestDao,
+    testResultDao: TestResultDao,
     currentUserId: Int,
 ) {
     val context = LocalContext.current
     val viewModel: TestsViewModel = viewModel(factory = object : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return TestsViewModel(testDao, currentUserId) as T
+            return TestsViewModel(testDao, testResultDao, currentUserId) as T  // ← ACTUALIZADO
         }
     })
 

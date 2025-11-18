@@ -1,9 +1,8 @@
-package com.example.appcarnavalextraordinaria.Screen3
+package com.example.appcarnavalextraordinaria.Tutoriales
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -14,15 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.appcarnavalextraordinaria.Navigation.Bars
 
 @Composable
-fun SenalesScreen(navController: NavController) {
-    Bars(navController = navController) { modifier ->
-        Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+fun PuntuacionScreen(navController: NavController) {
+
             Column(modifier = Modifier.fillMaxSize()) {
                 // Header
                 Box(
@@ -41,13 +37,13 @@ fun SenalesScreen(navController: NavController) {
                 ) {
                     Column {
                         Text(
-                            text = "Señales en Mus",
+                            text = "Sistema de Puntuación",
                             style = MaterialTheme.typography.headlineLarge,
                             color = Color.White,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "El lenguaje secreto del Mus",
+                            text = "Cómo se contabilizan los puntos en el Mus",
                             style = MaterialTheme.typography.titleMedium,
                             color = Color.White.copy(alpha = 0.9f)
                         )
@@ -58,64 +54,53 @@ fun SenalesScreen(navController: NavController) {
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     item {
                         Text(
-                            text = "Comunicación Discreta",
+                            text = "Objetivo del Juego",
                             style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                         Text(
-                            text = "Las señales son gestos sutiles que permiten comunicar información sobre tus cartas a tu compañero sin que los rivales se den cuenta. Su dominio es fundamental para el juego en equipo.",
+                            text = "Gana la pareja que primero alcance 40 puntos. Los puntos se consiguen mediante apuestas ganadas en cada ronda.",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurface,
                             lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.3
                         )
                     }
 
-                    // Señales organizadas por categorías
                     item {
-                        Text(
-                            text = "Señales de Cartas Especiales",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(vertical = 16.dp)
+                        ScoringPhaseCard(
+                            phaseName = "Grande",
+                            points = "1 punto",
+                            description = "Se gana por tener la carta más alta. Reyes (3 y 12) son los más valiosos."
                         )
                     }
 
-                    val señalesEspeciales = listOf(
-                        SignalItem("👂 Tocarse la oreja", "Solomillo (31 con 3 reyes)"),
-                        SignalItem("😬 Morderse labio inferior derecho", "3 reyes"),
-                        SignalItem("😬 Morderse la boca", "2 reyes"),
-                        SignalItem("😛 Sacar lengua hacia un lado", "3 pitos (2 y 1)"),
-                        SignalItem("😛 Sacar la lengua", "2 pitos (2 y 1)")
-                    )
-
-                    items(señalesEspeciales) { señal ->
-                        SignalCard(signal = señal.signal, meaning = señal.meaning)
-                    }
-
                     item {
-                        Text(
-                            text = "Señales de Combinaciones",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(vertical = 16.dp)
+                        ScoringPhaseCard(
+                            phaseName = "Chica",
+                            points = "1 punto",
+                            description = "Se gana por tener la carta más baja. Ases (1 y 2) son los más valiosos."
                         )
                     }
 
-                    val señalesCombinaciones = listOf(
-                        SignalItem("😉 Torcer la boca", "Tengo medias"),
-                        SignalItem("😉 Levantar cejas", "Tengo duples"),
-                        SignalItem("😉 Guiñar ojo", "Tengo 31 en juego"),
-                        SignalItem("😌 Cerrar ojos", "No tengo nada"),
-                        SignalItem("🤷 Levantar hombros", "Tengo 30 al punto")
-                    )
+                    item {
+                        ScoringPhaseCard(
+                            phaseName = "Pares",
+                            points = "Variable",
+                            description = "• Parejas simples: 1 punto\n• Medias: 2 puntos\n• Duples: 3 puntos\nSe suman embites adicionales."
+                        )
+                    }
 
-                    items(señalesCombinaciones) { señal ->
-                        SignalCard(signal = señal.signal, meaning = señal.meaning)
+                    item {
+                        ScoringPhaseCard(
+                            phaseName = "Juego",
+                            points = "Variable",
+                            description = "• Juego normal (≥31): 2 puntos\n• 31 exacto: 3 puntos\n• Se suman embites adicionales.\nSi nadie tiene juego, se juega al punto."
+                        )
                     }
 
                     item {
@@ -128,14 +113,14 @@ fun SenalesScreen(navController: NavController) {
                         ) {
                             Column(modifier = Modifier.padding(20.dp)) {
                                 Text(
-                                    text = "💡 Consejo Importante",
+                                    text = "🎯 Órdago",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "La discreción es clave. Las señales deben ser naturales y sutiles para no ser detectadas por los rivales. La práctica constante mejora la coordinación con tu pareja.",
+                                    text = "Apuesta total donde la pareja ganadora suma todos los puntos restantes para ganar la partida inmediatamente.",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f),
                                     lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.3
@@ -160,36 +145,51 @@ fun SenalesScreen(navController: NavController) {
                     }
                 }
             }
-        }
-    }
+
 }
 
-data class SignalItem(val signal: String, val meaning: String)
-
 @Composable
-fun SignalCard(signal: String, meaning: String) {
+fun ScoringPhaseCard(phaseName: String, points: String, description: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.Top
         ) {
-            Text(
-                text = signal,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.weight(1f),
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = phaseName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.3
+                )
+            }
             Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = meaning,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                textAlign = TextAlign.End
-            )
+            Box(
+                modifier = Modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = points,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
         }
     }
 }
