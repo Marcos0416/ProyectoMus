@@ -118,6 +118,8 @@ fun RegistroScreen(
                 color = MaterialTheme.colorScheme.primary
             )
 
+            Spacer(modifier = Modifier.height(16.dp)) // Separador vertical
+
             // Campo de texto para email con icono de persona adelante
             OutlinedTextField(
                 value = email,
