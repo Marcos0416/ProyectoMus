@@ -1,48 +1,33 @@
-Manual de Descarga y Uso del Paquete de la Aplicación
-Requisitos Previos
-Tener instalado Android Studio 
+Manual de Descarga y Uso del APK
+Descargar e Instalar el APK
+Descarga el archivo APK desde la sección de Releases del repositorio.
 
-Tener configurado SDK de Android para la compilación
+En tu dispositivo Android, habilita la opción de instalar aplicaciones de orígenes desconocidos (si no está activada).
 
-Conexión a Internet para clonar el repositorio
+Abre el archivo APK descargado desde el explorador de archivos o notificación de descarga.
 
-Descarga del Proyecto
-Clonar el repositorio con Git:
+Sigue las instrucciones para instalar la aplicación.
 
-git clone https://github.com/tu_usuario/tu_repositorio.git
+Uso de la Aplicación
+Abre la aplicación instalada desde el menú de aplicaciones de tu dispositivo.
 
-Abrir el proyecto en Android Studio seleccionando la carpeta clonada.
+Navega por el menú principal para acceder a:
 
-Configuración Inicial
-Esperar que Android Studio sincronice e instale las dependencias necesarias automáticamente.
+Tutoriales para aprender sobre el Mus.
 
-Configurar un emulador o conectar un dispositivo Android para pruebas.
+Tests para evaluar tus conocimientos.
 
-Uso del Paquete
-El paquete principal está en: com.example.appcarnavalextraordinaria
+Partidas interactivas para practicar con bots.
 
-Las funcionalidades principales se encuentran en los subpaquetes:
+Sección de señales para dominar el lenguaje del juego.
 
-Tutoriales: Contiene las pantallas de tutorial y aprendizaje.
+Consulta los tutoriales para comprender reglas, puntuación y estrategias.
 
-Test: Gestión y realización de tests.
+Realiza tests para recibir feedback y mejorar tus habilidades.
 
-Senales: Información sobre señales del juego Mus.
+Juega partidas simuladas para poner en práctica lo aprendido.
 
-PartidasInteractivas: Lógica y UI para partidas interactivas.
+Requisitos
+Dispositivo Android con versión mínima.
 
-Cómo Ejecutar
-Seleccionar el dispositivo o emulador.
-
-Ejecutar el proyecto desde Android Studio (Run > Run app).
-
-Navegar por la app usando el menú principal para acceder a tutoriales, tests, y partidas.
-
-Funcionalidades
-Tutoriales interactivos con explicación paso a paso.
-
-Tests de conocimientos con guardado de resultados.
-
-Partidas simuladas para practicar contra bots.
-
-Sistema de señales con explicaciones y ejemplos.
+Espacio libre para la instalación del APK.
