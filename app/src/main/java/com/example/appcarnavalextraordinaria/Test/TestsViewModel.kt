@@ -53,7 +53,6 @@ class TestsViewModel(
         val firstLaunch = prefs.getBoolean("first_launch_tests", true)
 
 
-
         // Verificar si ya hay tests
         val existingTests = testDao.getAllTests().first()
         println("DEBUG: Tests existentes en BD: ${existingTests.size}")
@@ -243,6 +242,7 @@ class TestsViewModel(
                 correctIndex = 1
             )
         )
+        // Preguntas para Test 5 - Reglas
         val preguntasTest5 = listOf(
             QuestionEntity(
                 testId = test5Id,
@@ -266,6 +266,7 @@ class TestsViewModel(
                 correctIndex = 0
             )
         )
+        // Preguntas para Test 6 - Historia
         val preguntasTest6 = listOf(
             QuestionEntity(
                 testId = test6Id,
@@ -297,11 +298,14 @@ class TestsViewModel(
         val questionsCount1 = testDao.getQuestionsForTest(test1Id).first().size
         val questionsCount2 = testDao.getQuestionsForTest(test2Id).first().size
 
-        println("DEBUG: Verificación - Tests: ${finalTests.size}, " +
-                "Preguntas Test1: $questionsCount1, Preguntas Test2: " +
-                "$questionsCount2")
+        println(
+            "DEBUG: Verificación - Tests: ${finalTests.size}, " +
+                    "Preguntas Test1: $questionsCount1, Preguntas Test2: " +
+                    "$questionsCount2"
+        )
 
     }
+
     // Función para guardar el resultado del test
     fun saveTestResult(testId: Int, score: Int, totalQuestions: Int) {
         viewModelScope.launch {
@@ -312,18 +316,12 @@ class TestsViewModel(
                 maxScore = totalQuestions
             )
             testResultDao.insertTestResult(testResult)
-            println("DEBUG: Resultado guardado - Test: $testId, " +
-                    "Score: $score/$totalQuestions")
+            println(
+                "DEBUG: Resultado guardado - Test: $testId, " +
+                        "Score: $score/$totalQuestions"
+            )
         }
     }
-
-    // Función para obtener el historial de tests del usuario
-    fun getTestResults() = testResultDao.getTestResultsByUser(currentUserId)
-
-    // Función para obtener estadísticas
-    suspend fun getTestStats(): Pair<Int, Double?> {
-        val completedTests = testResultDao.getCompletedTestsCount(currentUserId)
-        val averageScore = testResultDao.getAverageScore(currentUserId)
-        return Pair(completedTests, averageScore)
-    }
 }
+
+

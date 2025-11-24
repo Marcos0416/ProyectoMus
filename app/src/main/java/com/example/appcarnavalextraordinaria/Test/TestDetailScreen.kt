@@ -132,11 +132,11 @@ fun TestDetailScreen(
         ) {
             // Barra de progreso
             LinearProgressIndicator(
-                progress = (currentIndex + 1).toFloat() / totalQuestions.toFloat(),
+                progress = { (currentIndex + 1).toFloat() / totalQuestions.toFloat() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp),
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
             )
 
             // Contador de preguntas

@@ -7,17 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -32,15 +22,7 @@ import androidx.compose.material.icons.filled.SignalWifi4Bar
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.TrendingUp
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
@@ -79,10 +61,12 @@ fun MainScreen(
     currentUsername: String,
     context: Context
 ) {
+    // Obtener el nombre de usuario en sesión o "Usuario" si no está
     val loggedUsername = userViewModel.getSession(context)
+    // Lista reactiva para partidas del usuario
     val partidasList = remember { mutableStateListOf<PartidaEntity>() }
 
-    // Cargar partidas del usuario
+    // Cargar partidas del usuario de forma reactiva
     LaunchedEffect(currentUserId) {
         partidaDao.getPartidasByUser(currentUserId).collect { list ->
             partidasList.clear()
@@ -90,12 +74,13 @@ fun MainScreen(
         }
     }
 
-    // Colores personalizados
+    // Colores personalizados de la app
     val primaryColor = MaterialTheme.colorScheme.primary
     val secondaryColor = MaterialTheme.colorScheme.secondary
     val surfaceColor = MaterialTheme.colorScheme.surface
     val onSurfaceColor = MaterialTheme.colorScheme.onSurface
 
+    // Layout principal con barras y contenido
     Bars(navController = navController) { modifier ->
         Surface(
             modifier = modifier.fillMaxSize(),
@@ -110,29 +95,26 @@ fun MainScreen(
                         .padding(paddingValues),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // HEADER SECTION
+                    // Sección HEADER con bienvenida y avatar
                     item {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(
                                     brush = Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color(0xFF16213e),
-                                            Color(0xFF0f3460)
-                                        )
+                                        colors = listOf(Color(0xFF16213e), Color(0xFF0f3460))
                                     )
                                 )
                                 .padding(24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            // User Info Row
+                            // Fila con texto y avatar/logout
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // Welcome Text
+                                // Bienvenida
                                 Column {
                                     Text(
                                         text = "¡Bienvenido!",
@@ -147,21 +129,17 @@ fun MainScreen(
                                     )
                                 }
 
-                                // User Avatar with Logout
+                                // Avatar y botón logout
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    // User Avatar
                                     Box(
                                         modifier = Modifier
                                             .size(48.dp)
                                             .shadow(8.dp, CircleShape)
                                             .background(
                                                 brush = Brush.horizontalGradient(
-                                                    colors = listOf(
-                                                        Color(0xFF667eea),
-                                                        Color(0xFF764ba2)
-                                                    )
+                                                    colors = listOf(Color(0xFF667eea), Color(0xFF764ba2))
                                                 ),
                                                 shape = CircleShape
                                             )
@@ -182,7 +160,6 @@ fun MainScreen(
 
                                     Spacer(modifier = Modifier.width(8.dp))
 
-                                    // Logout Button
                                     IconButton(
                                         onClick = {
                                             userViewModel.logout(context)
@@ -209,7 +186,7 @@ fun MainScreen(
 
                             Spacer(modifier = Modifier.height(32.dp))
 
-                            // Main Logo and Title
+                            // Logo principal redondo con sombra y borde
                             Box(
                                 modifier = Modifier
                                     .size(120.dp)
@@ -228,6 +205,7 @@ fun MainScreen(
 
                             Spacer(modifier = Modifier.height(24.dp))
 
+                            // Título grande
                             Text(
                                 text = "MUS EDUCATIVO",
                                 style = MaterialTheme.typography.headlineMedium,
@@ -238,8 +216,9 @@ fun MainScreen(
 
                             Spacer(modifier = Modifier.height(8.dp))
 
+                            // Descripción
                             Text(
-                                text = "Domina el arte del Mus vasco\nAprende, practica y mejora",
+                                text = "Domina el arte del Mus\nAprende, practica y mejora",
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = Color.White.copy(alpha = 0.8f),
                                 textAlign = TextAlign.Center,
@@ -248,7 +227,7 @@ fun MainScreen(
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            // Stats Row
+                            // Estadísticas resumen
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -272,7 +251,7 @@ fun MainScreen(
                         }
                     }
 
-                    // MAIN MENU SECTION
+                    // Sección principal para navegar a contenidos
                     item {
                         Column(
                             modifier = Modifier
@@ -286,8 +265,6 @@ fun MainScreen(
                                 color = Color.White,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)
                             )
-
-                            // Feature Cards
                             FeatureCard(
                                 title = "Tutoriales Interactivos",
                                 description = "Aprende desde cero con guías paso a paso",
@@ -296,7 +273,6 @@ fun MainScreen(
                                 gradientColors = listOf(Color(0xFF4CAF50), Color(0xFF45a049)),
                                 onClick = { navController.navigate("Tutoriales") }
                             )
-
                             FeatureCard(
                                 title = "Diccionario de Señales",
                                 description = "Domina el lenguaje no verbal del Mus",
@@ -305,7 +281,6 @@ fun MainScreen(
                                 gradientColors = listOf(Color(0xFF2196F3), Color(0xFF1976D2)),
                                 onClick = { navController.navigate("Senales") }
                             )
-
                             FeatureCard(
                                 title = "Partidas Interactivas",
                                 description = "Practica contra bots inteligentes",
@@ -314,18 +289,14 @@ fun MainScreen(
                                 gradientColors = listOf(Color(0xFFFF9800), Color(0xFFF57C00)),
                                 onClick = {
                                     if (loggedUsername.isNullOrEmpty()) {
-                                        // Si no está logueado, navegar al login
                                         navController.navigate("login") {
-                                            // Opcional: limpiar el back stack
                                             popUpTo("main") { saveState = true }
                                         }
                                     } else {
-                                        // Si está logueado, navegar a la partida
                                         navController.navigate("Partida")
                                     }
                                 }
                             )
-
                             FeatureCard(
                                 title = "Tests de Conocimiento",
                                 description = "Pon a prueba lo aprendido",
@@ -337,7 +308,7 @@ fun MainScreen(
                         }
                     }
 
-                    // PARTIDAS SECTION
+                    // Sección de historial de partidas
                     item {
                         Column(
                             modifier = Modifier
@@ -351,14 +322,9 @@ fun MainScreen(
                                 color = Color.White,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)
                             )
-
                             if (partidasList.isNotEmpty()) {
-                                // Resumen de partidas
                                 PartidasSummaryCard(partidasList = partidasList)
-
                                 Spacer(modifier = Modifier.height(16.dp))
-
-                                // Partidas recientes
                                 Text(
                                     text = "Partidas Recientes",
                                     style = MaterialTheme.typography.titleMedium,
@@ -370,6 +336,7 @@ fun MainScreen(
                         }
                     }
 
+                    // Lista de las últimas 3 partidas
                     if (partidasList.isNotEmpty()) {
                         items(partidasList.take(3)) { partida ->
                             PartidaItem(
@@ -388,7 +355,7 @@ fun MainScreen(
                         }
                     }
 
-                    // BOTTOM SPACER
+                    // Espacio al final para buen scroll
                     item {
                         Spacer(modifier = Modifier.height(32.dp))
                     }
@@ -398,11 +365,10 @@ fun MainScreen(
     }
 }
 
+// Composable pequeño para el ítem estadístico
 @Composable
 private fun StatItem(value: String, label: String, icon: ImageVector) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
                 .size(48.dp)
@@ -410,340 +376,137 @@ private fun StatItem(value: String, label: String, icon: ImageVector) {
                 .border(1.dp, Color.White.copy(alpha = 0.2f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(20.dp)
-            )
+            Icon(imageVector = icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
         }
         Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = Color.White
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = Color.White.copy(alpha = 0.7f)
-        )
+        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f), textAlign = TextAlign.Center)
     }
 }
 
+// Tarjeta que muestra cada funcionalidad (tutoriales, partidas, etc)
 @Composable
 private fun FeatureCard(
-    title: String,
-    description: String,
-    icon: ImageVector,
-    iconColor: Color,
-    gradientColors: List<Color>,
-    onClick: () -> Unit
+    title: String, description: String, icon: ImageVector, iconColor: Color, gradientColors: List<Color>, onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 6.dp)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = LocalIndication.current,
-                onClick = onClick
-            ),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp)
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = LocalIndication.current, onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Icon Container
+        Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(colors = gradientColors),
-                        shape = RoundedCornerShape(16.dp)
-                    ),
+                modifier = Modifier.size(56.dp).background(brush = Brush.horizontalGradient(colors = gradientColors), shape = RoundedCornerShape(16.dp)),
                 contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = title,
-                    tint = Color.White,
-                    modifier = Modifier.size(28.dp)
-                )
+            ){
+                Icon(imageVector = icon, contentDescription = title, tint = Color.White, modifier = Modifier.size(28.dp))
             }
-
             Spacer(modifier = Modifier.width(16.dp))
-
-            // Text Content
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    lineHeight = 20.sp
-                )
+                Text(description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), lineHeight = 20.sp)
             }
-
-            // Arrow Indicator
             Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .background(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        CircleShape
-                    ),
+                modifier = Modifier.size(32.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowForward,
-                    contentDescription = "Ir",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(16.dp)
-                )
+                Icon(Icons.Default.ArrowForward, contentDescription = "Ir", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
             }
         }
     }
 }
 
+// Tarjeta resumen de partidas totales, ganadas y perdidas
 @Composable
 private fun PartidasSummaryCard(partidasList: List<PartidaEntity>) {
     val totalPartidas = partidasList.size
     val partidasGanadas = partidasList.count { it.resultado.contains("Pareja 1") }
     val partidasPerdidas = partidasList.count { it.resultado.contains("Pareja 2") }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp),
+    Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Resumen de Partidas",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .background(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                            CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.SportsEsports,
-                        contentDescription = "Partidas",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(18.dp)
-                    )
+        Column(Modifier.padding(20.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Resumen de Partidas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Box(Modifier.size(32.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), CircleShape), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.SportsEsports, contentDescription = "Partidas", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                 }
             }
-
             Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                PartidaStat(
-                    value = totalPartidas.toString(),
-                    label = "Total",
-                    color = MaterialTheme.colorScheme.primary
-                )
-                PartidaStat(
-                    value = partidasGanadas.toString(),
-                    label = "Victorias",
-                    color = Color(0xFF4CAF50)
-                )
-                PartidaStat(
-                    value = partidasPerdidas.toString(),
-                    label = "Derrotas",
-                    color = Color(0xFFF44336)
-                )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                PartidaStat(totalPartidas.toString(), "Total", MaterialTheme.colorScheme.primary)
+                PartidaStat(partidasGanadas.toString(), "Victorias", Color(0xFF4CAF50))
+                PartidaStat(partidasPerdidas.toString(), "Derrotas", Color(0xFFF44336))
             }
         }
     }
 }
 
+// Composable para mostrar el valor y la etiqueta con color
 @Composable
 private fun PartidaStat(value: String, label: String, color: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            textAlign = TextAlign.Center
-        )
+        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = color)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), textAlign = TextAlign.Center)
     }
 }
 
+// Tarjeta para mostrar partida individual con icono de victoria o derrota y fecha
 @Composable
 private fun PartidaItem(partida: PartidaEntity, modifier: Modifier = Modifier) {
-    val fechaFormateada = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-        .format(Date(partida.fecha))
+    val fechaFormateada = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date(partida.fecha))
 
     Card(
         modifier = modifier,
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
-        )
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f))
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Icono según el resultado
+        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             val (icono, color) = if (partida.resultado.contains("Pareja 1")) {
                 Pair(Icons.Default.Star, Color(0xFF4CAF50)) // Ganada
             } else {
                 Pair(Icons.Default.SportsEsports, Color(0xFFF44336)) // Perdida
             }
-
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(color.copy(alpha = 0.1f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icono,
-                    contentDescription = "Resultado",
-                    tint = color,
-                    modifier = Modifier.size(20.dp)
-                )
+            Box(Modifier.size(40.dp).background(color.copy(alpha = 0.1f), CircleShape), contentAlignment = Alignment.Center) {
+                Icon(icono, contentDescription = "Resultado", tint = color, modifier = Modifier.size(20.dp))
             }
-
             Spacer(modifier = Modifier.width(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = partida.resultado,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = "Fecha: $fechaFormateada",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
+            Column(Modifier.weight(1f)) {
+                Text(partida.resultado, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                Text("Fecha: $fechaFormateada", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             }
         }
     }
 }
 
+// Tarjeta para cuando no hay partidas, invitando a jugar la primera
 @Composable
-private fun EmptyPartidasCard(
-    modifier: Modifier = Modifier,
-    onJugarClick: () -> Unit
-) {
+private fun EmptyPartidasCard(modifier: Modifier = Modifier, onJugarClick: () -> Unit) {
     Card(
         modifier = modifier,
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .background(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.SportsEsports,
-                    contentDescription = "Comenzar",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(32.dp)
-                )
+        Column(Modifier.fillMaxWidth().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(Modifier.size(80.dp).background(MaterialTheme.colorScheme.primary.copy(alpha =0.1f), CircleShape), contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.SportsEsports, contentDescription = "Comenzar", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
             }
-
             Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Aún no has jugado partidas",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-
+            Text("Aún no has jugado partidas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Comienza tu primera partida para ver tu historial aquí",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                textAlign = TextAlign.Center,
-                lineHeight = 20.sp
-            )
-
+            Text("Comienza tu primera partida para ver tu historial aquí", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), textAlign=TextAlign.Center, lineHeight=20.sp)
             Spacer(modifier = Modifier.height(16.dp))
-
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = LocalIndication.current,
-                        onClick = { onJugarClick() }
-                    ),
-
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
+                modifier = Modifier.fillMaxWidth()
+                    .clickable(interactionSource=remember{MutableInteractionSource()}, indication=LocalIndication.current, onClick=onJugarClick),
+                elevation = CardDefaults.cardElevation(defaultElevation=4.dp),
+                colors = CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.primary)
             ) {
-                Text(
-                    text = "Jugar Primera Partida",
-                    modifier = Modifier.padding(vertical = 12.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    textAlign = TextAlign.Center
-                )
+                Text("Para jugar la primera partida,dirigete desde aqui dandole en la tarjeta de partida interactiva", modifier = Modifier.padding(vertical=12.dp), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = Color.White, textAlign = TextAlign.Center)
             }
         }
     }

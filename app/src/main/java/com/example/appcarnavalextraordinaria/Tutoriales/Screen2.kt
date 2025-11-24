@@ -21,148 +21,153 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
+// Pantalla principal de tutoriales con lista de temas disponibles
 @Composable
 fun TutorialesScreen(navController: NavController) {
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primaryContainer,
-                                MaterialTheme.colorScheme.background
-                            )
+    // Columna principal con fondo en gradiente vertical desde el contenedor primario a fondo
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primaryContainer,
+                        MaterialTheme.colorScheme.background
+                    )
+                )
+            )
+    ) {
+        // Header con imagen de fondo simulada por gradiente vertical primario
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.primaryContainer
                         )
                     )
+                ),
+            contentAlignment = Alignment.BottomStart
+        ) {
+            // Columna con el título y subtítulo blancos y en negrita
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
             ) {
-                // Header con imagen de fondo
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.primaryContainer
-                                )
-                            )
-                        ),
-                    contentAlignment = Alignment.BottomStart
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp)
-                    ) {
-                        Text(
-                            text = "Tutoriales de Mus",
-                            style = MaterialTheme.typography.headlineLarge,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Domina el arte del Mus español",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
-                    }
-                }
+                Text(
+                    text = "Tutoriales de Mus",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Domina el arte del Mus español",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White.copy(alpha = 0.9f)
+                )
+            }
+        }
 
-                // Lista de tutoriales
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    item {
-                        Text(
-                            text = "Selecciona un tema:",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)
-                        )
-                    }
-
-                    item {
-                        TutorialCard(
-                            title = "Reglas Básicas",
-                            description = "Fundamentos esenciales del juego",
-                            icon = Icons.Default.Rule,
-                            color = MaterialTheme.colorScheme.primary,
-                            onClick = { navController.navigate("Reglas") }
-                        )
-                    }
-
-                    item {
-                        TutorialCard(
-                            title = "El Mazo y las Cartas",
-                            description = "Conoce las cartas y sus valores",
-                            icon = Icons.Default.Deck,
-                            color = MaterialTheme.colorScheme.secondary,
-                            onClick = { navController.navigate("Mazo") }
-                        )
-                    }
-
-                    item {
-                        TutorialCard(
-                            title = "Estrategias Iniciales",
-                            description = "Tácticas para comenzar con ventaja",
-                            icon = Icons.Default.Insights,
-                            color = MaterialTheme.colorScheme.tertiary,
-                            onClick = { navController.navigate("Estrategias") }
-                        )
-                    }
-
-                    item {
-                        TutorialCard(
-                            title = "Flujo de Partida",
-                            description = "Desarrollo completo de una partida",
-                            icon = Icons.Default.PlayCircle,
-                            color = MaterialTheme.colorScheme.primary,
-                            onClick = { navController.navigate("Funcionamiento") }
-                        )
-                    }
-
-                    item {
-                        TutorialCard(
-                            title = "Sistema de Puntuación",
-                            description = "Cómo se contabilizan los puntos",
-                            icon = Icons.Default.Score,
-                            color = MaterialTheme.colorScheme.secondary,
-                            onClick = { navController.navigate("Puntuacion") }
-                        )
-                    }
-
-
-
-                    item {
-                        Spacer(modifier = Modifier.height(30.dp))
-                        OutlinedButton(
-                            onClick = { navController.popBackStack() },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.primary
-                            )
-                        ) {
-                            Icon(
-                                Icons.Default.ArrowBack,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Volver al Menú Principal")
-                        }
-                    }
-                }
+        // Lista perezosa que muestra las tarjetas para cada tutorial con padding y separación
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Texto indicativo para seleccionar un tema
+            item {
+                Text(
+                    text = "Selecciona un tema:",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)
+                )
             }
 
+            // Tarjetas para cada tutorial con título, descripción, icono y color temático
+            item {
+                TutorialCard(
+                    title = "Reglas Básicas",
+                    description = "Fundamentos esenciales del juego",
+                    icon = Icons.Default.Rule,
+                    color = MaterialTheme.colorScheme.primary,
+                    onClick = { navController.navigate("Reglas") }
+                )
+            }
+
+            item {
+                TutorialCard(
+                    title = "El Mazo y las Cartas",
+                    description = "Conoce las cartas y sus valores",
+                    icon = Icons.Default.Deck,
+                    color = MaterialTheme.colorScheme.secondary,
+                    onClick = { navController.navigate("Mazo") }
+                )
+            }
+
+            item {
+                TutorialCard(
+                    title = "Estrategias Iniciales",
+                    description = "Tácticas para comenzar con ventaja",
+                    icon = Icons.Default.Insights,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    onClick = { navController.navigate("Estrategias") }
+                )
+            }
+
+            item {
+                TutorialCard(
+                    title = "Flujo de Partida",
+                    description = "Desarrollo completo de una partida",
+                    icon = Icons.Default.PlayCircle,
+                    color = MaterialTheme.colorScheme.primary,
+                    onClick = { navController.navigate("Funcionamiento") }
+                )
+            }
+
+            item {
+                TutorialCard(
+                    title = "Sistema de Puntuación",
+                    description = "Cómo se contabilizan los puntos",
+                    icon = Icons.Default.Score,
+                    color = MaterialTheme.colorScheme.secondary,
+                    onClick = { navController.navigate("Puntuacion") }
+                )
+            }
+
+            // Botón para volver al menú principal con icono y texto
+            item {
+                Spacer(modifier = Modifier.height(30.dp))
+                OutlinedButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.ArrowBack,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Volver al Menú Principal")
+                }
+            }
+        }
+    }
 }
 
+// Composable para mostrar una tarjeta de tutorial con icono, títulos y color temático.
+// Se comporta como botón mediante clickable para la navegación
 @Composable
 fun TutorialCard(
     title: String,
@@ -186,6 +191,7 @@ fun TutorialCard(
             modifier = Modifier.padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Contenedor para el icono circular con color semitrasparente
             Box(
                 modifier = Modifier
                     .size(56.dp)
@@ -202,6 +208,7 @@ fun TutorialCard(
 
             Spacer(modifier = Modifier.width(16.dp))
 
+            // Columna para título y descripción con peso para ocupar espacio
             Column(
                 modifier = Modifier.weight(1f)
             ) {
@@ -219,6 +226,7 @@ fun TutorialCard(
                 )
             }
 
+            // Icono de flecha hacia derecha para indicar acción
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = "Ver más",

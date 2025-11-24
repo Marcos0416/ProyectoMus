@@ -24,33 +24,37 @@ fun TestResultScreen(
     testTitle: String = "Test",
     testId: Int  // ← AÑADE ESTE PARÁMETRO
 ) {
-    val percentage = (score.toFloat() / totalQuestions.toFloat()) * 100
+    val percentage = if (totalQuestions > 0) {
+        (score.toFloat() / totalQuestions.toFloat()) * 100f
+    } else {
+        0f
+    }
 
     // Determinar resultado y colores
     val (title, message, color, emoji) = when {
         percentage >= 90 -> Quadruple(
-            "¡Excelente! 🎉",
+            "¡Excelente! ",
             "Dominas completamente este tema. ¡Eres un experto en Mus!",
             MaterialTheme.colorScheme.primary,
-            "🎉"
+            ""
         )
         percentage >= 70 -> Quadruple(
-            "¡Muy bien! 👍",
+            "¡Muy bien! ",
             "Tienes un buen conocimiento del Mus. Sigue practicando.",
             MaterialTheme.colorScheme.secondary,
-            "👍"
+            ""
         )
         percentage >= 50 -> Quadruple(
-            "¡Bien hecho! ✅",
+            "¡Bien hecho! ",
             "Vas por buen camino. Sigue aprendiendo para mejorar.",
             MaterialTheme.colorScheme.tertiary,
-            "✅"
+            ""
         )
         else -> Quadruple(
-            "Sigue practicando 💪",
+            "Sigue practicando ",
             "El Mus requiere práctica. No te rindas y vuelve a intentarlo.",
             MaterialTheme.colorScheme.error,
-            "💪"
+            ""
         )
     }
 
@@ -159,32 +163,13 @@ fun TestResultScreen(
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // Barra de progreso detallada
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Tu progreso:",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        LinearProgressIndicator(
-                            progress = percentage / 100f,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(12.dp),
-                            color = color,
-                            trackColor = color.copy(alpha = 0.2f)
-                        )
-                    }
+
 
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Información de guardado
                     Text(
-                        text = "✅ Resultado guardado en tu historial",
+                        text = " Resultado guardado en tu historial",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
                         textAlign = TextAlign.Center
@@ -207,16 +192,7 @@ fun TestResultScreen(
                     Text("Más Tests")
                 }
 
-                Button(
-                    onClick = {
-                        // Vuelve al test actual para repetirlo
-                        navController.popBackStack()
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = color)
-                ) {
-                    Text("Repetir Test")
-                }
+
             }
         }
     }

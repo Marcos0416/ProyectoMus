@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.appcarnavalextraordinaria.Data.MovimientoDao
 import com.example.appcarnavalextraordinaria.Data.PartidaDao
-import com.example.appcarnavalextraordinaria.Data.ProgressDao
+
 import com.example.appcarnavalextraordinaria.Data.UserDao
 
 class MusGameViewModelFactory(

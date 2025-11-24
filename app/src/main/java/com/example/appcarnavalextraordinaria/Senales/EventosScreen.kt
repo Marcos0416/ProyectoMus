@@ -18,12 +18,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.appcarnavalextraordinaria.Navigation.Bars
 
+// Pantalla que muestra las señales usadas en el Mus
 @Composable
 fun SenalesScreen(navController: NavController) {
     Bars(navController = navController) { modifier ->
         Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Header
+                // Header con título y subtítulo
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -59,6 +60,7 @@ fun SenalesScreen(navController: NavController) {
                         .padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    // Introducción breve sobre las señales
                     item {
                         Text(
                             text = "Comunicación Discreta",
@@ -74,7 +76,7 @@ fun SenalesScreen(navController: NavController) {
                         )
                     }
 
-                    // Señales organizadas por categorías
+                    // Categoría de señales especiales
                     item {
                         Text(
                             text = "Señales de Cartas Especiales",
@@ -84,18 +86,20 @@ fun SenalesScreen(navController: NavController) {
                         )
                     }
 
+                    // Lista de señales especiales y sus significados
                     val señalesEspeciales = listOf(
-                        SignalItem("👂 Tocarse la oreja", "Solomillo (31 con 3 reyes)"),
-                        SignalItem("😬 Morderse labio inferior derecho", "3 reyes"),
-                        SignalItem("😬 Morderse la boca", "2 reyes"),
-                        SignalItem("😛 Sacar lengua hacia un lado", "3 pitos (2 y 1)"),
-                        SignalItem("😛 Sacar la lengua", "2 pitos (2 y 1)")
+                        SignalItem(" Tocarse la oreja", "Solomillo (31 con 3 reyes)"),
+                        SignalItem(" Morderse labio inferior derecho", "3 reyes"),
+                        SignalItem(" Morderse la boca", "2 reyes"),
+                        SignalItem(" Sacar lengua hacia un lado", "3 pitos (2 y 1)"),
+                        SignalItem(" Sacar la lengua", "2 pitos (2 y 1)")
                     )
 
                     items(señalesEspeciales) { señal ->
                         SignalCard(signal = señal.signal, meaning = señal.meaning)
                     }
 
+                    // Categoría de señales de combinaciones
                     item {
                         Text(
                             text = "Señales de Combinaciones",
@@ -105,18 +109,20 @@ fun SenalesScreen(navController: NavController) {
                         )
                     }
 
+                    // Lista de señales para combinaciones y sus significados
                     val señalesCombinaciones = listOf(
-                        SignalItem("😉 Torcer la boca", "Tengo medias"),
-                        SignalItem("😉 Levantar cejas", "Tengo duples"),
-                        SignalItem("😉 Guiñar ojo", "Tengo 31 en juego"),
-                        SignalItem("😌 Cerrar ojos", "No tengo nada"),
-                        SignalItem("🤷 Levantar hombros", "Tengo 30 al punto")
+                        SignalItem(" Torcer la boca", "Tengo medias"),
+                        SignalItem(" Levantar cejas", "Tengo duples"),
+                        SignalItem(" Guiñar ojo", "Tengo 31 en juego"),
+                        SignalItem(" Cerrar ojos", "No tengo nada"),
+                        SignalItem(" Levantar hombros", "Tengo 30 al punto")
                     )
 
                     items(señalesCombinaciones) { señal ->
                         SignalCard(signal = señal.signal, meaning = señal.meaning)
                     }
 
+                    // Consejo importante para usar las señales de forma discreta
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -143,6 +149,7 @@ fun SenalesScreen(navController: NavController) {
                         }
                     }
 
+                    // Botón para volver a la pantalla de Tutoriales
                     item {
                         Spacer(modifier = Modifier.height(24.dp))
                         Button(
@@ -163,8 +170,10 @@ fun SenalesScreen(navController: NavController) {
     }
 }
 
+// Datos para representar una señal con su gesto y significado
 data class SignalItem(val signal: String, val meaning: String)
 
+// Composable que muestra una tarjeta con una señal y su significado
 @Composable
 fun SignalCard(signal: String, meaning: String) {
     Card(

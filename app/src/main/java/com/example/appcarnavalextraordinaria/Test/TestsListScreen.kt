@@ -103,7 +103,7 @@ fun TestsListScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        "🎯 Pon a prueba tus conocimientos",
+                        " Pon a prueba tus conocimientos",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = primaryColor
