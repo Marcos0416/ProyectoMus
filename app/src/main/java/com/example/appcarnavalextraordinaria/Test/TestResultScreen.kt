@@ -18,19 +18,20 @@ import androidx.navigation.NavController
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TestResultScreen(
-    navController: NavController,
-    score: Int,
-    totalQuestions: Int,
-    testTitle: String = "Test",
-    testId: Int  // ← AÑADE ESTE PARÁMETRO
+    navController: NavController,   // Controlador de navegación para volver a pantallas anteriores
+    score: Int,                     // Número de respuestas correctas del usuario
+    totalQuestions: Int,            // Total de preguntas en el test
+    testTitle: String = "Test",     // Nombre del test mostrado en la interfaz
+    testId: Int                     // ID del test (útil si se quiere ampliar funcionalidades)
 ) {
+    // Cálculo del porcentaje de aciertos
     val percentage = if (totalQuestions > 0) {
         (score.toFloat() / totalQuestions.toFloat()) * 100f
     } else {
         0f
     }
 
-    // Determinar resultado y colores
+    // Selección de mensaje, título y colores según el porcentaje obtenido
     val (title, message, color, emoji) = when {
         percentage >= 90 -> Quadruple(
             "¡Excelente! ",
@@ -58,13 +59,15 @@ fun TestResultScreen(
         )
     }
 
+    // Estructura general de la pantalla
     Scaffold(
         topBar = {
+            // Barra superior con botón de volver
             TopAppBar(
-                title = { Text("Resultados - $testTitle") },  // ← MUESTRA EL TÍTULO DEL TEST
+                title = { Text("Resultados - $testTitle") },
                 navigationIcon = {
                     IconButton(onClick = {
-                        // Navegar al inicio de tests en lugar de solo back
+                        // Vuelve a la pantalla principal de tests, limpiando el back stack
                         navController.navigate("tests") {
                             popUpTo("tests") { inclusive = true }
                         }
@@ -75,6 +78,7 @@ fun TestResultScreen(
             )
         }
     ) { innerPadding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -82,7 +86,8 @@ fun TestResultScreen(
                 .background(MaterialTheme.colorScheme.background),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Tarjeta de resultados principal
+
+            // Tarjeta central donde se muestra el resultado
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -97,7 +102,8 @@ fun TestResultScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    // Emoji y título
+
+                    // (Opcional) Emoji según el resultado, si se usa
                     Text(
                         text = emoji,
                         style = MaterialTheme.typography.displayLarge
@@ -105,6 +111,7 @@ fun TestResultScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
+                    // Título principal según el porcentaje (Excelente, Muy bien, etc.)
                     Text(
                         text = title,
                         style = MaterialTheme.typography.headlineMedium,
@@ -115,7 +122,7 @@ fun TestResultScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Información del test
+                    // Muestra el título del test
                     Text(
                         text = testTitle,
                         style = MaterialTheme.typography.titleMedium,
@@ -125,7 +132,7 @@ fun TestResultScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Puntuación circular
+                    // Indicador circular con puntuación y porcentaje
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
@@ -136,12 +143,14 @@ fun TestResultScreen(
                             )
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            // Puntuación en formato "X/Y"
                             Text(
                                 text = "$score/$totalQuestions",
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = color
                             )
+                            // Porcentaje
                             Text(
                                 text = "${percentage.toInt()}%",
                                 style = MaterialTheme.typography.bodyMedium,
@@ -152,7 +161,7 @@ fun TestResultScreen(
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // Mensaje personalizado
+                    // Mensaje adaptado al rendimiento del usuario
                     Text(
                         text = message,
                         style = MaterialTheme.typography.bodyLarge,
@@ -163,11 +172,7 @@ fun TestResultScreen(
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Información de guardado
+                    // Indicador informativo de que la puntuación ha sido guardada
                     Text(
                         text = " Resultado guardado en tu historial",
                         style = MaterialTheme.typography.labelMedium,
@@ -177,13 +182,14 @@ fun TestResultScreen(
                 }
             }
 
-            // Botones de acción
+            // Botones inferiores
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(24.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // Botón para volver a la lista de tests
                 OutlinedButton(
                     onClick = { navController.navigate("tests") },
                     modifier = Modifier.weight(1f),
@@ -191,14 +197,12 @@ fun TestResultScreen(
                 ) {
                     Text("Más Tests")
                 }
-
-
             }
         }
     }
 }
 
-// Helper class para el quadruple
+// Clase auxiliar para devolver cuatro valores en un when
 data class Quadruple<out A, out B, out C, out D>(
     val first: A,
     val second: B,

@@ -39,22 +39,25 @@ fun TestsListScreen(
     currentUserId: Int,
 ) {
     val context = LocalContext.current
+
+    // ViewModel con factory manual para pasar los DAOs
     val viewModel: TestsViewModel = viewModel(factory = object : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return TestsViewModel(testDao, testResultDao, currentUserId) as T  // ← ACTUALIZADO
+            return TestsViewModel(testDao, testResultDao, currentUserId) as T
         }
     })
 
+    // Estado de los tests
     val tests by viewModel.tests.collectAsState()
     val isCreatingTests by viewModel.isCreatingTests.collectAsState()
 
+    // Genera tests por defecto si es la primera vez
     LaunchedEffect(Unit) {
         viewModel.createSampleTestsIfFirstLaunch(context)
     }
 
-    // Colores personalizados
+    // Colores usados en la pantalla
     val primaryColor = MaterialTheme.colorScheme.primary
-    val surfaceColor = MaterialTheme.colorScheme.surface
     val onSurfaceColor = MaterialTheme.colorScheme.onSurface
 
     Scaffold(
@@ -68,6 +71,7 @@ fun TestsListScreen(
                     )
                 },
                 navigationIcon = {
+                    // Botón para volver a la pantalla principal
                     IconButton(onClick = { navController.navigate("main") }) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
@@ -84,13 +88,15 @@ fun TestsListScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // Header informativo
+
+            // Tarjeta informativa del header
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -118,7 +124,10 @@ fun TestsListScreen(
                 }
             }
 
+            // Diferentes estados de la pantalla
             when {
+
+                // Estado cargando tests por primera vez
                 isCreatingTests -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -139,6 +148,8 @@ fun TestsListScreen(
                         }
                     }
                 }
+
+                // No hay tests guardados en BDD
                 tests.isEmpty() -> {
                     Column(
                         modifier = Modifier.fillMaxSize(),
@@ -146,7 +157,7 @@ fun TestsListScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.test), // Añade un icono
+                            painter = painterResource(id = R.drawable.test),
                             contentDescription = "Sin tests",
                             modifier = Modifier.size(80.dp),
                             tint = onSurfaceColor.copy(alpha = 0.5f)
@@ -159,6 +170,8 @@ fun TestsListScreen(
                         )
                     }
                 }
+
+                // Lista de tests disponible
                 else -> {
                     LazyColumn(
                         modifier = Modifier
@@ -167,6 +180,7 @@ fun TestsListScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(tests) { test ->
+                            // Card por cada test
                             TestCard(
                                 test = test,
                                 onClick = { navController.navigate("testDetail/${test.id}") }
@@ -184,6 +198,7 @@ fun TestCard(test: TestEntity, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            // Clickable personalizado sin ripple extra
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = LocalIndication.current,
@@ -195,7 +210,8 @@ fun TestCard(test: TestEntity, onClick: () -> Unit) {
         Column(
             modifier = Modifier.padding(20.dp)
         ) {
-            // Icono según el tipo de test
+
+            // Selección de icono y color según el título del test
             val (icon, color) = when {
                 test.title.contains("Básico", ignoreCase = true) -> Pair("📚", MaterialTheme.colorScheme.primary)
                 test.title.contains("Señales", ignoreCase = true) -> Pair("👁️", MaterialTheme.colorScheme.secondary)
@@ -207,6 +223,7 @@ fun TestCard(test: TestEntity, onClick: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
+                // Icono del test
                 Text(
                     text = icon,
                     style = MaterialTheme.typography.headlineMedium,
@@ -216,12 +233,15 @@ fun TestCard(test: TestEntity, onClick: () -> Unit) {
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
+                    // Título del test
                     Text(
                         text = test.title,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = color
                     )
+
+                    // Descripción opcional
                     test.description?.let {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
@@ -232,6 +252,7 @@ fun TestCard(test: TestEntity, onClick: () -> Unit) {
                     }
                 }
 
+                // Flecha de navegación
                 Icon(
                     imageVector = Icons.Default.ArrowForwardIos,
                     contentDescription = "Comenzar test",
@@ -240,7 +261,7 @@ fun TestCard(test: TestEntity, onClick: () -> Unit) {
                 )
             }
 
-            // Badge de dificultad
+            // Etiqueta de dificultad
             Row(
                 modifier = Modifier.padding(top = 8.dp)
             ) {
