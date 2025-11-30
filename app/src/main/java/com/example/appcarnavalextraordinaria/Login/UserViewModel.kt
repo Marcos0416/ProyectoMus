@@ -5,6 +5,13 @@ import androidx.lifecycle.*
 import com.example.appcarnavalextraordinaria.Data.UserDao
 import com.example.appcarnavalextraordinaria.Data.UserEntity
 import kotlinx.coroutines.launch
+import android.util.Patterns
+
+enum class RegisterResult {
+    SUCCESS,
+    INVALID_EMAIL,
+    USER_EXISTS
+}
 
 // ViewModel que gestiona la lógica de usuario y autenticación
 class UserViewModel(private val userDao: UserDao) : ViewModel() {
@@ -52,21 +59,35 @@ class UserViewModel(private val userDao: UserDao) : ViewModel() {
         return id
     }
 
-    // Registrar usuario nuevo de forma segura
-    suspend fun registerUser(username: String, password: String, context: Context, email: String): Boolean {
-        val existingUser = userDao.getUserByUsername(username)
-        if (existingUser == null) {
-            val hashedPassword = PasswordUtils.hashPassword(password)
-            val newUser = UserEntity(username = username, password = hashedPassword, email = email)
 
-            val newId = userDao.insertUser(newUser).toInt()
 
-            // Guardar sesión y actualizar estado usuario logueado
-            saveSession(context, newUser.copy(id = newId))
-            _loggedInUser.postValue(newUser.copy(id = newId))
-            return true
+    suspend fun registerUser(
+        username: String,
+        password: String,
+        context: Context,
+        email: String
+    ): RegisterResult {
+
+        // Validar email
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            return RegisterResult.INVALID_EMAIL
         }
-        return false
+
+        // Comprobar si el usuario existe
+        val existingUser = userDao.getUserByUsername(username)
+        if (existingUser != null) {
+            return RegisterResult.USER_EXISTS
+        }
+
+        // Crear el usuario
+        val hashedPassword = PasswordUtils.hashPassword(password)
+        val newUser = UserEntity(username = username, password = hashedPassword, email = email)
+        val newId = userDao.insertUser(newUser).toInt()
+
+        saveSession(context, newUser.copy(id = newId))
+        _loggedInUser.postValue(newUser.copy(id = newId))
+
+        return RegisterResult.SUCCESS
     }
 
     // Guardar datos de sesión en SharedPreferences para persistencia entre reinicios

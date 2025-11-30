@@ -89,21 +89,7 @@ fun Bars(
             )
         },
 
-        // Barra inferior vacía con color de fondo personalizado
-        bottomBar = {
-            BottomAppBar(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                // Fila horizontal para organizar iconos o botones en barra inferior
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,  // Espaciado uniforme entre elementos
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Actualmente vacío, se puede añadir aquí botones o iconos de navegación rápidos
-                }
-            }
-        },
+
 
         // Contenido principal que se dibuja debajo de las barras, recibe padding para no solaparse
     ) { innerPadding ->

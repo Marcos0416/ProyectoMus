@@ -89,102 +89,104 @@ fun TestsListScreen(
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
 
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
         ) {
+            item {
 
-            // Tarjeta informativa del header
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = primaryColor.copy(alpha = 0.1f))
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                // Tarjeta informativa del header
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                    colors = CardDefaults.cardColors(containerColor = primaryColor.copy(alpha = 0.1f))
                 ) {
-                    Text(
-                        " Pon a prueba tus conocimientos",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = primaryColor
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        "Completa los tests y mejora tu juego",
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                        color = onSurfaceColor.copy(alpha = 0.8f)
-                    )
-                }
-            }
-
-            // Diferentes estados de la pantalla
-            when {
-
-                // Estado cargando tests por primera vez
-                isCreatingTests -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(48.dp),
-                                color = primaryColor,
-                                strokeWidth = 4.dp
+                        Text(
+                            " Pon a prueba tus conocimientos",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = primaryColor
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "Completa los tests y mejora tu juego",
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            color = onSurfaceColor.copy(alpha = 0.8f)
+                        )
+                    }
+                }
+
+                // Diferentes estados de la pantalla
+                when {
+
+                    // Estado cargando tests por primera vez
+                    isCreatingTests -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(48.dp),
+                                    color = primaryColor,
+                                    strokeWidth = 4.dp
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    "Preparando tests...",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = onSurfaceColor
+                                )
+                            }
+                        }
+                    }
+
+                    // No hay tests guardados en BDD
+                    tests.isEmpty() -> {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.test),
+                                contentDescription = "Sin tests",
+                                modifier = Modifier.size(80.dp),
+                                tint = onSurfaceColor.copy(alpha = 0.5f)
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                "Preparando tests...",
-                                style = MaterialTheme.typography.bodyLarge,
+                                "No hay tests disponibles",
+                                style = MaterialTheme.typography.titleMedium,
                                 color = onSurfaceColor
                             )
                         }
                     }
-                }
 
-                // No hay tests guardados en BDD
-                tests.isEmpty() -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.test),
-                            contentDescription = "Sin tests",
-                            modifier = Modifier.size(80.dp),
-                            tint = onSurfaceColor.copy(alpha = 0.5f)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            "No hay tests disponibles",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = onSurfaceColor
-                        )
-                    }
-                }
-
-                // Lista de tests disponible
-                else -> {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(tests) { test ->
-                            // Card por cada test
-                            TestCard(
-                                test = test,
-                                onClick = { navController.navigate("testDetail/${test.id}") }
-                            )
+                    // Lista de tests disponible
+                    else -> {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(tests) { test ->
+                                // Card por cada test
+                                TestCard(
+                                    test = test,
+                                    onClick = { navController.navigate("testDetail/${test.id}") }
+                                )
+                            }
                         }
                     }
                 }

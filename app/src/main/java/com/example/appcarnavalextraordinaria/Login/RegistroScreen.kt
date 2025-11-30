@@ -198,11 +198,10 @@ fun RegistroScreen(
                         else -> {
                             errorMsg = "" // Limpia mensajes previos
                             scope.launch { // Lanza corutina para no bloquear UI
-                                val success = userViewModel.registerUser(username, password, context, email)
-                                if (success) {
-                                    onRegistroOk() // Registro exitoso: ejecuta callback (e.g. navegar)
-                                } else {
-                                    errorMsg = "El usuario ya existe" // Mostrar error si falla registro
+                                when (userViewModel.registerUser(username, password, context, email)) {
+                                    RegisterResult.SUCCESS -> onRegistroOk()
+                                    RegisterResult.INVALID_EMAIL -> errorMsg = "Formato de email inválido"
+                                    RegisterResult.USER_EXISTS -> errorMsg = "El usuario ya existe"
                                 }
                             }
                         }

@@ -223,7 +223,6 @@
                                 // Título grande
                                 Text(
                                     text = "MUS EDUCATIVO",
-
                                     style = MaterialTheme.typography.headlineMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White,

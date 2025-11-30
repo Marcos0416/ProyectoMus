@@ -74,9 +74,9 @@ class MusGameViewModel(
     private val _jugadores = MutableStateFlow(
         listOf(
             Jugador(currentUsername, true),   // Posición 0: jugador humano
-            Jugador("Bot 1", false),          // Posición 1
-            Jugador("Bot 2", false),          // Posición 2
-            Jugador("Bot 3", false)           // Posición 3
+            Jugador("Pepe", false),          // Posición 1
+            Jugador("Angel", false),          // Posición 2
+            Jugador("Alberto", false)           // Posición 3
         )
     )
     val jugadores: StateFlow<List<Jugador>> = _jugadores // Expuesto como solo lectura a la UI
@@ -426,14 +426,14 @@ class MusGameViewModel(
         // Si solo una pareja tiene pares, ganan automáticamente
         if (pareja1TienePares && !pareja2TienePares) {
             _ganadorPares.value = _jugadores.value[0] to _jugadores.value[1]
-            _mensajes.value = "¡Tú y Bot 1 ganan automáticamente los pares! La otra pareja no tiene pares."
+            _mensajes.value = "¡$currentUsername y Pepe ganais automáticamente los pares! La otra pareja no tiene pares."
             Handler(Looper.getMainLooper()).postDelayed({
                 finalizarRondaParesConGanadorAutomatico()
             }, 2000)
             return
         } else if (!pareja1TienePares && pareja2TienePares) {
             _ganadorPares.value = _jugadores.value[2] to _jugadores.value[3]
-            _mensajes.value = "¡Bot 2 y Bot 3 ganan automáticamente los pares! La otra pareja no tiene pares."
+            _mensajes.value = "¡Angel y alberto ganais automáticamente los pares! La otra pareja no tiene pares."
             Handler(Looper.getMainLooper()).postDelayed({
                 finalizarRondaParesConGanadorAutomatico()
             }, 2000)
