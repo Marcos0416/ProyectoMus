@@ -40,23 +40,19 @@ fun TestsListScreen(
 ) {
     val context = LocalContext.current
 
-    // ViewModel con factory manual para pasar los DAOs
     val viewModel: TestsViewModel = viewModel(factory = object : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return TestsViewModel(testDao, testResultDao, currentUserId) as T
         }
     })
 
-    // Estado de los tests
     val tests by viewModel.tests.collectAsState()
     val isCreatingTests by viewModel.isCreatingTests.collectAsState()
 
-    // Genera tests por defecto si es la primera vez
     LaunchedEffect(Unit) {
         viewModel.createSampleTestsIfFirstLaunch(context)
     }
 
-    // Colores usados en la pantalla
     val primaryColor = MaterialTheme.colorScheme.primary
     val onSurfaceColor = MaterialTheme.colorScheme.onSurface
 
@@ -71,7 +67,6 @@ fun TestsListScreen(
                     )
                 },
                 navigationIcon = {
-                    // Botón para volver a la pantalla principal
                     IconButton(onClick = { navController.navigate("main") }) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
@@ -95,9 +90,9 @@ fun TestsListScreen(
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            item {
 
-                // Tarjeta informativa del header
+            // HEADER siempre es un item independiente
+            item {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -124,72 +119,68 @@ fun TestsListScreen(
                         )
                     }
                 }
+            }
 
-                // Diferentes estados de la pantalla
-                when {
+            // ESTADOS ----------------------------------------------------------------
 
-                    // Estado cargando tests por primera vez
-                    isCreatingTests -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(48.dp),
-                                    color = primaryColor,
-                                    strokeWidth = 4.dp
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    "Preparando tests...",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = onSurfaceColor
-                                )
-                            }
-                        }
-                    }
-
-                    // No hay tests guardados en BDD
-                    tests.isEmpty() -> {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.test),
-                                contentDescription = "Sin tests",
-                                modifier = Modifier.size(80.dp),
-                                tint = onSurfaceColor.copy(alpha = 0.5f)
+            // cargando
+            if (isCreatingTests) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 40.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(48.dp),
+                                color = primaryColor,
+                                strokeWidth = 4.dp
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                "No hay tests disponibles",
-                                style = MaterialTheme.typography.titleMedium,
+                                "Preparando tests...",
+                                style = MaterialTheme.typography.bodyLarge,
                                 color = onSurfaceColor
                             )
                         }
                     }
-
-                    // Lista de tests disponible
-                    else -> {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(tests) { test ->
-                                // Card por cada test
-                                TestCard(
-                                    test = test,
-                                    onClick = { navController.navigate("testDetail/${test.id}") }
-                                )
-                            }
-                        }
+                }
+            }
+            // lista vacía
+            else if (tests.isEmpty()) {
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 60.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.test),
+                            contentDescription = "Sin tests",
+                            modifier = Modifier.size(80.dp),
+                            tint = onSurfaceColor.copy(alpha = 0.5f)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            "No hay tests disponibles",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = onSurfaceColor
+                        )
                     }
                 }
+            }
+            // lista con datos
+            else {
+                items(tests) { test ->
+                    TestCard(
+                        test = test,
+                        onClick = { navController.navigate("testDetail/${test.id}") }
+                    )
+                }
+                item { Spacer(modifier = Modifier.height(16.dp)) }
             }
         }
     }
@@ -200,7 +191,6 @@ fun TestCard(test: TestEntity, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            // Clickable personalizado sin ripple extra
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = LocalIndication.current,
@@ -213,7 +203,6 @@ fun TestCard(test: TestEntity, onClick: () -> Unit) {
             modifier = Modifier.padding(20.dp)
         ) {
 
-            // Selección de icono y color según el título del test
             val (icon, color) = when {
                 test.title.contains("Básico", ignoreCase = true) -> Pair("📚", MaterialTheme.colorScheme.primary)
                 test.title.contains("Señales", ignoreCase = true) -> Pair("👁️", MaterialTheme.colorScheme.secondary)
@@ -225,7 +214,6 @@ fun TestCard(test: TestEntity, onClick: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Icono del test
                 Text(
                     text = icon,
                     style = MaterialTheme.typography.headlineMedium,
@@ -235,7 +223,6 @@ fun TestCard(test: TestEntity, onClick: () -> Unit) {
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
-                    // Título del test
                     Text(
                         text = test.title,
                         style = MaterialTheme.typography.titleLarge,
@@ -243,7 +230,6 @@ fun TestCard(test: TestEntity, onClick: () -> Unit) {
                         color = color
                     )
 
-                    // Descripción opcional
                     test.description?.let {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
@@ -254,7 +240,6 @@ fun TestCard(test: TestEntity, onClick: () -> Unit) {
                     }
                 }
 
-                // Flecha de navegación
                 Icon(
                     imageVector = Icons.Default.ArrowForwardIos,
                     contentDescription = "Comenzar test",
@@ -263,7 +248,6 @@ fun TestCard(test: TestEntity, onClick: () -> Unit) {
                 )
             }
 
-            // Etiqueta de dificultad
             Row(
                 modifier = Modifier.padding(top = 8.dp)
             ) {
